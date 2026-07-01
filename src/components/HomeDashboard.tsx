@@ -34,7 +34,7 @@ export function HomeDashboard({
   const [detailed, setDetailed] = useState(false);
 
   const m = metricsByPeriod[period];
-  const series = seriesByPeriod[period] ?? [];
+  const series = useMemo(() => seriesByPeriod[period] ?? [], [seriesByPeriod, period]);
 
   // Modelled per-plant output (pro-rate fuel-type system generation by capacity).
   const mapGenerators: MapGenerator[] = useMemo(() => {

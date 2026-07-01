@@ -63,6 +63,28 @@ export default function PressPage({ params: { locale } }: { params: { locale: st
         <p className="prose-body mt-3 text-sm text-navy-500">Additional assets are managed in the admin media library.</p>
       </Section>
 
+      <Section title="Embeddable widgets">
+        <p className="prose-body mb-4 max-w-3xl">
+          Free to embed on any site or article. Copy the snippet:
+        </p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { name: 'Live wasted-energy cost', path: 'cost', w: 360, h: 220 },
+            { name: 'Mini map', path: 'map', w: 440, h: 640 },
+            { name: 'Savings calculator', path: 'calculator', w: 660, h: 380 },
+          ].map((wgt) => (
+            <div key={wgt.path} className="card">
+              <p className="font-semibold text-navy-900">{wgt.name}</p>
+              <pre className="mt-2 overflow-x-auto rounded-lg bg-navy-800 p-3 text-[11px] leading-relaxed text-navy-50">{`<iframe
+  src="https://irishgrid.com/widget/${wgt.path}"
+  width="${wgt.w}" height="${wgt.h}"
+  style="border:0" loading="lazy"
+  title="Irish Grid — ${wgt.name}"></iframe>`}</pre>
+            </div>
+          ))}
+        </div>
+      </Section>
+
       <Section title="Boilerplate">
         <div className="card max-w-3xl">
           <p className="prose-body">

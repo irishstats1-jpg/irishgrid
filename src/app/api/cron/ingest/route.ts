@@ -1,6 +1,23 @@
 import { NextResponse } from 'next/server';
 import { fetchBtcMarket } from '@/lib/data/live';
-import { ALL_PERIODS, computePeriodMetrics } from '@/lib/data/metrics';
+import { ALL_PERIODS, computePeriodMetrics, getSeries } from '@/lib/data/metrics';
+
+// Daily milestone detection (§9): flag a new record-waste day so a social draft
+// can be created. Returns the milestone (in production it writes a social_posts
+// draft/trigger for Make).
+function detectMilestone() {
+  const series = getSeries();
+  if (series.length < 2) return null;
+  const today = series[series.length - 1];
+  const todayWasted = Math.max(0, today.windAvailableMwh - today.produced.wind);
+  const priorMax = Math.max(
+    ...series.slice(0, -1).map((d) => Math.max(0, d.windAvailableMwh - d.produced.wind)),
+  );
+  if (todayWasted > priorMax) {
+    return { type: 'record_waste_day', date: today.date, wastedMwh: Math.round(todayWasted) };
+  }
+  return null;
+}
 
 // Hourly ingestion + recompute (§9). Triggered by a Cloudflare Cron Trigger
 // hitting this endpoint with the MAKE_SOCIAL_WEBHOOK_SECRET (reused as a shared
@@ -21,6 +38,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const job = searchParams.get('job') ?? 'hourly';
+
   const market = await fetchBtcMarket();
 
   // Recompute the live/rolling period metrics.
@@ -29,14 +49,20 @@ export async function POST(request: Request) {
     return { period: p, wastedMwh: Math.round(m.wastedMwh), costEur: Math.round(m.costEur) };
   });
 
+  // Daily run additionally runs milestone detection.
+  const milestone = job === 'daily' ? detectMilestone() : null;
+
   // TODO (production): upsert generation_snapshots from fetchEirgridArea(...),
-  // upsert btc_market/wholesale_prices, upsert period_metrics, set job_status.
+  // upsert btc_market/wholesale_prices, upsert period_metrics, set job_status;
+  // if milestone, insert a social_posts draft for Make.
 
   return NextResponse.json({
     ok: true,
+    job,
     ranAt: new Date().toISOString(),
     market: { priceEur: market.priceEur, networkHashrateThs: market.networkHashrateThs },
     recomputed,
+    milestone,
   });
 }
 
