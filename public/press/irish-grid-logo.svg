@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40">
+  <rect width="200" height="40" fill="#ffffff"/>
+  <g stroke="#4db8e8" stroke-width="2" fill="none">
+    <path d="M6 30 L18 10 L30 30"/>
+    <path d="M10 22 L26 22"/>
+    <path d="M14 30 L18 20 L22 30"/>
+  </g>
+  <circle cx="18" cy="10" r="2.5" fill="#4db8e8"/>
+  <text x="42" y="27" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#0b2545">Irish<tspan fill="#2b9fd6"> Grid</tspan></text>
+</svg>

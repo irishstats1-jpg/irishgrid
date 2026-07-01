@@ -9,6 +9,6 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Match everything except api, static assets, widgets (bare embeds) and files.
-  matcher: ['/((?!api|_next|_vercel|widget|.*\\..*).*)'],
+  // Match everything except api, static assets, widgets, admin and files.
+  matcher: ['/((?!api|_next|_vercel|widget|admin|.*\\..*).*)'],
 };
