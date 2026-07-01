@@ -9,6 +9,13 @@ import { IrelandMap, type MapGenerator } from './IrelandMap';
 import { FuelMixChart, FuelMixDonut, TrendChart } from './charts';
 import { EstimateBadge, ActualBadge, NotFinancialAdvice, Takeaway } from './ui';
 import { eur, energy, num } from '@/lib/format';
+import {
+  computeBtcSavings,
+  computeCost,
+  DEFAULT_ASSUMPTIONS,
+  DEFAULT_COST_ASSUMPTIONS,
+  FALLBACK_BTC_MARKET,
+} from '@/lib/methodology';
 
 type Denom = 'billpayer' | 'person';
 
@@ -47,6 +54,22 @@ export function HomeDashboard({
   const costPer = denom === 'billpayer' ? m.costPerBillpayerEur : m.costPerPersonEur;
   const savingPer = denom === 'billpayer' ? m.savingPerBillpayerEur : m.savingPerPersonEur;
   const wastedShare = m.producedMwh > 0 ? (m.wastedMwh / (m.producedMwh + m.wastedMwh)) * 100 : 0;
+
+  // Derived daily trends for the cost + could-have-saved charts (§5.1). Each day's
+  // wasted energy runs through the same cost and BTC-savings model as the panel.
+  const derivedSeries = useMemo(
+    () =>
+      series.map((d) => {
+        const wasted = Number(d.wasted) || 0;
+        const cost = computeCost({ totalMwh: wasted }, DEFAULT_COST_ASSUMPTIONS, {
+          nBillpayers: DEFAULT_ASSUMPTIONS.nBillpayers,
+          nPeople: DEFAULT_ASSUMPTIONS.nPeople,
+        });
+        const btc = computeBtcSavings(wasted, 24, DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET);
+        return { date: d.date as string, cost: Math.round(cost.costEur), saved: Math.round(btc.valueEur) };
+      }),
+    [series],
+  );
 
   return (
     <div>
@@ -135,6 +158,16 @@ export function HomeDashboard({
             <h3 className="font-semibold text-navy-900">Wasted (dispatched-down) energy</h3>
             <TrendChart data={series} dataKey="wasted" color="#e06d3b" yFormat={(v) => `${Math.round(v).toLocaleString()} MWh`} />
             <Takeaway>Every spike is clean electricity Ireland generated but couldn&apos;t use.</Takeaway>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-navy-900">Cost to billpayers</h3>
+            <TrendChart data={derivedSeries} dataKey="cost" color="#c2410c" yFormat={(v) => eur(v, { compact: true })} />
+            <Takeaway>Modelled compensation for dispatched-down energy — money that lands on bills.</Takeaway>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-navy-900">Could have been saved (mined BTC)</h3>
+            <TrendChart data={derivedSeries} dataKey="saved" color="#059669" yFormat={(v) => eur(v, { compact: true })} />
+            <Takeaway>The value flexible mining could have recovered from the same surplus.</Takeaway>
           </div>
         </div>
       )}
