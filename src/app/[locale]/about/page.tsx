@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
 import { PageHeader, Section, Callout, NotFinancialAdvice } from '@/components/ui';
+import { SavingsCalculator } from '@/components/SavingsCalculator';
 import {
   DEFAULT_ASSUMPTIONS,
   FALLBACK_BTC_MARKET,
@@ -160,6 +161,14 @@ saving/head  = value_eur / n_billpayers`}
           Every assumption is editable in the admin panel and recomputes figures without a redeploy. They are
           shown next to derived figures throughout the site.
         </Callout>
+      </Section>
+
+      <Section title="Try it yourself">
+        <p className="prose-body mb-4 max-w-3xl">
+          Adjust the inputs to see how the recoverable value changes. Defaults are the transparent
+          assumptions above; nothing here is a forecast or advice.
+        </p>
+        <SavingsCalculator />
       </Section>
 
       <Section title="Data sources">

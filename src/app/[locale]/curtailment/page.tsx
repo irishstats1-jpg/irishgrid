@@ -5,6 +5,7 @@ import { PageHeader, Section, Callout, NotFinancialAdvice, Takeaway } from '@/co
 import { PeriodTable } from '@/components/PeriodTable';
 import { ComparisonBars } from '@/components/charts';
 import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computeReplacementCost, WHOLESALE_REF_EUR_PER_MWH } from '@/lib/methodology';
 import { eur, energy } from '@/lib/format';
 import type { PeriodKey } from '@/lib/methodology/types';
 
@@ -27,6 +28,7 @@ export default function CurtailmentPage({ params: { locale } }: { params: { loca
     { label: 'Paid to generators (as-is)', value: y.costEur, color: '#e06d3b' },
     { label: 'Value if surplus mined BTC', value: y.btcValueEur, color: '#2b9fd6' },
   ];
+  const replacementCost = computeReplacementCost(y.wastedMwh, WHOLESALE_REF_EUR_PER_MWH);
 
   return (
     <>
@@ -97,6 +99,16 @@ export default function CurtailmentPage({ params: { locale } }: { params: { loca
             </Takeaway>
           </div>
           <div className="space-y-4">
+            <div className="card border-navy-200 bg-navy-50">
+              <h3 className="font-semibold text-navy-900">Supporting context: replacement cost</h3>
+              <p className="prose-body mt-2">
+                Separately from the compensation figure, the clean energy lost to dispatch-down has to be
+                replaced — usually by burning gas. Valued at a reference wholesale price of{' '}
+                {eur(WHOLESALE_REF_EUR_PER_MWH)}/MWh, the {energy(y.wastedMwh)} wasted in 2024 represents
+                roughly <strong>{eur(replacementCost, { compact: true })}</strong> of energy that had to come
+                from elsewhere — plus the added emissions. This is context, not added to the headline cost.
+              </p>
+            </div>
             <div className="card">
               <h3 className="font-semibold text-navy-900">How mining makes more renewables feasible</h3>
               <p className="prose-body mt-2">

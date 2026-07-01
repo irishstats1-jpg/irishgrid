@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeCost, DEFAULT_COST_ASSUMPTIONS } from './cost';
+import { computeCost, computeReplacementCost, DEFAULT_COST_ASSUMPTIONS } from './cost';
 import { DEFAULT_ASSUMPTIONS } from './constants';
 
 const C = { ...DEFAULT_COST_ASSUMPTIONS };
@@ -41,5 +41,15 @@ describe('computeCost', () => {
   it('treats negative volume as zero', () => {
     const r = computeCost({ totalMwh: -5 }, C, D);
     expect(r.costEur).toBe(0);
+  });
+});
+
+describe('computeReplacementCost', () => {
+  it('is volume × wholesale price', () => {
+    expect(computeReplacementCost(1000, 95)).toBe(95_000);
+  });
+  it('clamps negatives to zero', () => {
+    expect(computeReplacementCost(-1000, 95)).toBe(0);
+    expect(computeReplacementCost(1000, -95)).toBe(0);
   });
 });

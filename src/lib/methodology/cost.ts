@@ -25,6 +25,19 @@ export const DEFAULT_COST_ASSUMPTIONS: CostAssumptions = {
   compensatedShareBlended: 0.55,
 };
 
+/**
+ * Secondary "replacement cost" context (§7.2): when curtailed renewables are
+ * replaced by burning gas, the system pays roughly the wholesale price for that
+ * energy on top of the emissions. This is supporting context, clearly separated
+ * from the headline compensation cost — NOT added to it.
+ */
+export function computeReplacementCost(wastedMwh: number, wholesalePriceEurPerMwh: number): number {
+  return Math.max(0, wastedMwh) * Math.max(0, wholesalePriceEurPerMwh);
+}
+
+/** Reference wholesale price (€/MWh) until a live SEMOpx feed is wired (§20). */
+export const WHOLESALE_REF_EUR_PER_MWH = 95;
+
 export interface CostResult {
   totalWastedMwh: number;
   /** Volume that attracts a compensation payment, MWh. */
