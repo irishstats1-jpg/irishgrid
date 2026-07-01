@@ -1,0 +1,20 @@
+# Cloudflare Pages + Workers config (§3, §9).
+# Deploy the Next.js app with @cloudflare/next-on-pages:
+#   npx @cloudflare/next-on-pages
+# then deploy the .vercel/output/static directory to Pages.
+#
+# Cron Triggers call the hourly ingestion endpoint (§9). Point the scheduled
+# worker at POST /api/cron/ingest with the shared secret, or configure the
+# trigger against the Pages Functions route.
+
+name = "irish-grid"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+# Hourly ingestion + recompute; daily milestone/aggregate refresh.
+crons = ["0 * * * *", "15 6 * * *"]
+
+# Secrets (set with `wrangler secret put`), not stored here:
+#   SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY,
+#   MAKE_SOCIAL_WEBHOOK_SECRET, NEXT_PUBLIC_* as vars.
