@@ -1,0 +1,49 @@
+{
+  "brand": {
+    "name": "Irish Grid",
+    "tagline": "Cad atá ag cumhachtú na hÉireann — agus an méid a chuirimid amú",
+    "independence": "Neamhspleách · gan bhaint le EirGrid ná SONI"
+  },
+  "nav": {
+    "home": "Foinsí & Costas",
+    "curtailment": "Ciorrú",
+    "proposal": "Moladh",
+    "forecast": "Réamhaisnéis",
+    "getInvolved": "Bí Páirteach",
+    "blog": "Blag",
+    "about": "Fúinn & Modheolaíocht",
+    "press": "Preas",
+    "pledge": "Gealltanas",
+    "data": "Sonraí"
+  },
+  "common": {
+    "estimate": "Meastachán samhaltaithe",
+    "actual": "Fíorfhigiúr bliantúil oifigiúil",
+    "notFinancialAdvice": "Ní comhairle airgeadais ná infheistíochta é seo.",
+    "perBillpayer": "in aghaidh an íocóra billí",
+    "perPerson": "in aghaidh an duine",
+    "learnMore": "Tuilleadh eolais",
+    "readMethodology": "Léigh an mhodheolaíocht",
+    "loading": "Á lódáil…"
+  },
+  "durations": {
+    "yesterday": "Inné",
+    "last_week": "An tseachtain seo caite",
+    "last_month": "An mhí seo caite",
+    "last_365": "365 lá anuas",
+    "2024": "2024",
+    "2023": "2023",
+    "2022": "2022"
+  },
+  "footer": {
+    "independenceTitle": "Neamhspleáchas",
+    "independenceBody": "Tionscadal neamhspleách is ea Irish Grid. Níl baint aige le EirGrid, SONI, ná le haon oibreoir córais.",
+    "financialTitle": "Séanadh airgeadais",
+    "financialBody": "Braitheann figiúirí Bitcoin ar phraghsanna margaidh luaineacha agus tá siad léiritheach. Ní comhairle airgeadais é aon rud ar an suíomh seo.",
+    "estimatesTitle": "Faoi na figiúirí",
+    "estimatesBody": "Is meastacháin shamhaltaithe iad figiúirí ciorraithe agus costais gearrthéarma. Úsáideann figiúirí bliantúla tuarascálacha oifigiúla EirGrid.",
+    "sourcesTitle": "Foinsí sonraí",
+    "contactTitle": "Teagmháil",
+    "rights": "© {year} Irish Grid. Tógtha ar shonraí poiblí."
+  }
+}

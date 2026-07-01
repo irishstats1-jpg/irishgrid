@@ -1,0 +1,49 @@
+{
+  "brand": {
+    "name": "Irish Grid",
+    "tagline": "What's really powering Ireland — and what we waste",
+    "independence": "Independent · not affiliated with EirGrid or SONI"
+  },
+  "nav": {
+    "home": "Sources & Cost",
+    "curtailment": "Curtailment",
+    "proposal": "Proposal",
+    "forecast": "Forecast",
+    "getInvolved": "Get Involved",
+    "blog": "Blog",
+    "about": "About & Methodology",
+    "press": "Press",
+    "pledge": "Pledge",
+    "data": "Data"
+  },
+  "common": {
+    "estimate": "Modelled estimate",
+    "actual": "Official annual actual",
+    "notFinancialAdvice": "Not financial or investment advice.",
+    "perBillpayer": "per billpayer",
+    "perPerson": "per person",
+    "learnMore": "Learn more",
+    "readMethodology": "Read the methodology",
+    "loading": "Loading…"
+  },
+  "durations": {
+    "yesterday": "Yesterday",
+    "last_week": "Last week",
+    "last_month": "Last month",
+    "last_365": "Last 365 days",
+    "2024": "2024",
+    "2023": "2023",
+    "2022": "2022"
+  },
+  "footer": {
+    "independenceTitle": "Independence",
+    "independenceBody": "Irish Grid is an independent project. It is not affiliated with, endorsed by, or connected to EirGrid, SONI, or any system operator.",
+    "financialTitle": "Financial disclaimer",
+    "financialBody": "Bitcoin figures depend on volatile market prices and are illustrative. Nothing on this site is financial or investment advice.",
+    "estimatesTitle": "About the figures",
+    "estimatesBody": "Short-period curtailment and cost figures are modelled estimates. Annual figures use official EirGrid Constraint & Curtailment reports.",
+    "sourcesTitle": "Data sources",
+    "contactTitle": "Contact",
+    "rights": "© {year} Irish Grid. Built on public data."
+  }
+}
