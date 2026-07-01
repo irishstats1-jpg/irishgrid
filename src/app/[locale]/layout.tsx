@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     "Independent, data-driven look at the Republic of Ireland's electricity grid: live sources, the clean energy we curtail, what it costs billpayers, and a proposal to turn that waste into value with flexible Bitcoin-mining load. Not affiliated with EirGrid or SONI.",
   openGraph: { type: 'website', siteName: 'Irish Grid' },
   robots: { index: true, follow: true },
+  alternates: {
+    languages: {
+      en: '/',
+      ga: '/ga',
+    },
+  },
 };
 
 async function loadMessages(locale: string) {
