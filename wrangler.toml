@@ -29,8 +29,11 @@ enabled = true
 [triggers]
 crons = ["0 * * * *", "15 6 * * *"]
 
+# Plain-text vars are REPLACED by wrangler deploy, so public config lives here.
+# Secrets (SUPABASE_SERVICE_ROLE_KEY, MAKE_SOCIAL_WEBHOOK_SECRET, RESEND/OPENAI
+# keys) must be set as dashboard Secrets (encrypted) — those survive deploys.
 [vars]
 NEXT_PUBLIC_SITE_URL = "https://irishgrid.com"
 DEFAULT_LOCALE = "en"
-# NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / NEXT_PUBLIC_ANALYTICS_DOMAIN
-# can be set here or in the dashboard.
+NEXT_PUBLIC_SUPABASE_URL = "https://blfygbmfpkrnaxrqcwhu.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZnlnYm1mcGtybmF4cnFjd2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjIwMDEsImV4cCI6MjA5ODQ5ODAwMX0.PpTMQWHRAOEnblC6vHmp0QppM9Gg9hXsJUeLNkWn0u8"
