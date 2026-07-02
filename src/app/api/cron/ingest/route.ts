@@ -27,13 +27,16 @@ function detectMilestone() {
 export const dynamic = 'force-dynamic';
 
 function authorized(request: Request): boolean {
-  const secret = process.env.MAKE_SOCIAL_WEBHOOK_SECRET;
-  if (!secret) return true; // no secret configured (dev) → allow
-  const header = request.headers.get('authorization') ?? request.headers.get('x-cron-secret');
-  return header === `Bearer ${secret}` || header === secret;
+  // Accept either our shared secret or Vercel Cron's CRON_SECRET bearer.
+  const secrets = [process.env.MAKE_SOCIAL_WEBHOOK_SECRET, process.env.CRON_SECRET].filter(
+    Boolean,
+  ) as string[];
+  if (secrets.length === 0) return true; // no secret configured (dev) → allow
+  const header = request.headers.get('authorization') ?? request.headers.get('x-cron-secret') ?? '';
+  return secrets.some((s) => header === `Bearer ${s}` || header === s);
 }
 
-export async function POST(request: Request) {
+async function runIngest(request: Request) {
   if (!authorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -66,8 +69,6 @@ export async function POST(request: Request) {
   });
 }
 
-// Allow manual GET check from the admin without triggering writes.
-export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return NextResponse.json({ ok: true, hint: 'POST to run ingestion' });
-}
+// Cron schedulers (Vercel Cron, Cloudflare) send GET; Make/manual can POST.
+export const GET = runIngest;
+export const POST = runIngest;

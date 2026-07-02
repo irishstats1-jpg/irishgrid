@@ -1,0 +1,11 @@
+# Cloudflare Workers/Pages local secrets (used by `wrangler`). Copy to .dev.vars.
+# In production, set these with `wrangler secret put <NAME>` or in the dashboard.
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+OPENAI_API_KEY=
+RESEND_API_KEY=
+CONTACT_NOTIFY_EMAIL=
+MAKE_SOCIAL_WEBHOOK_SECRET=
+NEXT_PUBLIC_ANALYTICS_DOMAIN=
+NEXT_PUBLIC_SITE_URL=https://irishgrid.com
