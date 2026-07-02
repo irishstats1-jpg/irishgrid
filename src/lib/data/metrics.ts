@@ -218,6 +218,7 @@ export const ALL_PERIODS: PeriodKey[] = [
   'last_week',
   'last_month',
   'last_365',
+  '2025',
   '2024',
   '2023',
   '2022',

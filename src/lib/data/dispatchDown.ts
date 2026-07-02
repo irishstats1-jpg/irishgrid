@@ -48,6 +48,16 @@ export const DISPATCH_DOWN_ACTUALS: DispatchDownActual[] = [
     windDispatchDownPct: 14.0,
     notes: 'Seed figures — replace with exact report values on import.',
   },
+  {
+    year: 2025,
+    region: 'ROI',
+    source: 'EirGrid Annual Renewable Energy Constraint & Curtailment Report 2025',
+    gwh: 3600,
+    curtailmentGwh: 2600,
+    constraintGwh: 1000,
+    windDispatchDownPct: 15.5,
+    notes: 'Seed figures extrapolated from the 2022–2024 trend — replace with exact 2025 report values on import.',
+  },
 ];
 
 export function getActual(year: number): DispatchDownActual | undefined {
@@ -59,4 +69,5 @@ export const ANNUAL_GENERATION_GWH: Record<number, number> = {
   2022: 33_500,
   2023: 33_000,
   2024: 34_000,
+  2025: 35_000,
 };

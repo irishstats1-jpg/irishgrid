@@ -24,14 +24,14 @@ export const metadata: Metadata = {
     'What dispatch-down (curtailment and constraint) is, why billpayers end up paying for switched-off clean energy, how much it costs — and how fast it grows if nothing changes.',
 };
 
-const TABLE_PERIODS: PeriodKey[] = ['yesterday', 'last_week', 'last_month', '2024', '2023', '2022'];
+const TABLE_PERIODS: PeriodKey[] = ['yesterday', 'last_week', 'last_month', '2025', '2024', '2023', '2022'];
 
 export default async function CurtailmentPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const metrics: Record<string, ReturnType<typeof computePeriodMetrics>> = {};
   for (const p of TABLE_PERIODS) metrics[p] = computePeriodMetrics(p);
-  const y = metrics['2024'];
+  const y = metrics['2025'];
 
   const comparison = [
     { label: 'Paid to generators (as-is)', value: y.costEur, color: '#e06d3b' },
@@ -54,7 +54,7 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
             When there is more wind than the grid can safely absorb, generators are{' '}
             <strong>dispatched down</strong> — told to produce less. The clean electricity is lost, many
             generators are <strong>paid compensation</strong> for it, and gas is burned to fill the gap.
-            In 2024 alone an estimated <strong>{energy(y.wastedMwh)}</strong> was thrown away. That bill
+            In 2025 alone an estimated <strong>{energy(y.wastedMwh)}</strong> was thrown away. That bill
             lands on you.
           </>
         }
@@ -83,7 +83,8 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
         </div>
         <Callout tone="info" title="It gets worse as we build more wind">
           Wind dispatch-down rose from about <strong>8.5% (2022)</strong> to <strong>10.7% (2023)</strong>{' '}
-          to <strong>14.0% (2024)</strong>. Without matching grid, storage and flexible demand, adding more
+          to <strong>14.0% (2024)</strong> — and an estimated <strong>15.5% (2025, provisional)</strong>.
+          Without matching grid, storage and flexible demand, adding more
           renewables means throwing away a bigger share of what we build — which undermines the economics of
           new projects.
         </Callout>
@@ -107,7 +108,7 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
           <div className="card">
             <ComparisonBars data={comparison} />
             <Takeaway>
-              In 2024, the same wasted energy — if used by interruptible mining that switches off the instant
+              In 2025, the same wasted energy — if used by interruptible mining that switches off the instant
               the grid needs power — could have generated an estimated {eur(y.btcValueEur, { compact: true })}{' '}
               of recoverable value.
             </Takeaway>
@@ -118,7 +119,7 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
               <p className="prose-body mt-2">
                 Separately from the compensation figure, the clean energy lost to dispatch-down has to be
                 replaced — usually by burning gas. Valued at a reference wholesale price of{' '}
-                {eur(WHOLESALE_REF_EUR_PER_MWH)}/MWh, the {energy(y.wastedMwh)} wasted in 2024 represents
+                {eur(WHOLESALE_REF_EUR_PER_MWH)}/MWh, the {energy(y.wastedMwh)} wasted in 2025 represents
                 roughly <strong>{eur(replacementCost, { compact: true })}</strong> of energy that had to come
                 from elsewhere — plus the added emissions. This is context, not added to the headline cost.
               </p>

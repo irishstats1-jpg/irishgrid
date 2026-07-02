@@ -12,12 +12,14 @@ import { eur, energy, num } from '@/lib/format';
 import {
   computeBtcSavings,
   computeCost,
+  computeReplacementCost,
   DEFAULT_ASSUMPTIONS,
   DEFAULT_COST_ASSUMPTIONS,
   FALLBACK_BTC_MARKET,
+  WHOLESALE_REF_EUR_PER_MWH,
 } from '@/lib/methodology';
 
-type Denom = 'billpayer' | 'person';
+type Denom = 'household' | 'person';
 
 export function HomeDashboard({
   metricsByPeriod,
@@ -29,8 +31,8 @@ export function HomeDashboard({
   periods: PeriodKey[];
 }) {
   const td = useTranslations('durations');
-  const [period, setPeriod] = useState<PeriodKey>('last_365');
-  const [denom, setDenom] = useState<Denom>('billpayer');
+  const [period, setPeriod] = useState<PeriodKey>('2025');
+  const [denom, setDenom] = useState<Denom>('household');
   const [detailed, setDetailed] = useState(false);
 
   const m = metricsByPeriod[period];
@@ -51,9 +53,14 @@ export function HomeDashboard({
     });
   }, [detailed, m]);
 
-  const costPer = denom === 'billpayer' ? m.costPerBillpayerEur : m.costPerPersonEur;
-  const savingPer = denom === 'billpayer' ? m.savingPerBillpayerEur : m.savingPerPersonEur;
+  // "Per household" is the layman-friendly headline (≈2.1m households, an
+  // assumptions-table value); "per person" (≈5.3m) is the alternative view.
+  const costPer =
+    denom === 'household' ? m.costEur / DEFAULT_ASSUMPTIONS.nHouseholds : m.costPerPersonEur;
+  const savingPer =
+    denom === 'household' ? m.btcValueEur / DEFAULT_ASSUMPTIONS.nHouseholds : m.savingPerPersonEur;
   const wastedShare = m.producedMwh > 0 ? (m.wastedMwh / (m.producedMwh + m.wastedMwh)) * 100 : 0;
+  const replacementCost = computeReplacementCost(m.wastedMwh, WHOLESALE_REF_EUR_PER_MWH);
 
   // Aggregate the daily series into a small number of readable buckets
   // (365 daily points are unreadable — a policymaker should be able to take the
@@ -128,7 +135,7 @@ export function HomeDashboard({
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-navy-900">The numbers</h2>
             <div className="flex rounded-md border border-navy-200 text-xs">
-              {(['billpayer', 'person'] as Denom[]).map((d) => (
+              {(['household', 'person'] as Denom[]).map((d) => (
                 <button
                   key={d}
                   type="button"
@@ -154,7 +161,12 @@ export function HomeDashboard({
             sub={`≈ ${num(wastedShare, 1)}% of output`}
             tone="warn"
           />
-          <Stat label="Paid out for that switched-off energy" value={eur(m.costEur, { compact: true })} tone="warn" />
+          <Stat
+            label="Paid out for that switched-off energy"
+            value={eur(m.costEur, { compact: true })}
+            sub={`compensation only — replacing it with gas cost ≈ ${eur(replacementCost, { compact: true })} more`}
+            tone="warn"
+          />
           <Stat label={`Cost per ${denom}`} value={eur(costPer)} tone="warn" />
 
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
