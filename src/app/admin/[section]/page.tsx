@@ -1,4 +1,7 @@
 import { notFound } from 'next/navigation';
+import { requireAdmin } from '@/lib/adminAuth';
+
+export const dynamic = 'force-dynamic';
 
 // Admin sub-sections (§10). These are functional seams: the dashboard, auth and
 // data layer are in place; each section documents what it manages and where it
@@ -46,11 +49,8 @@ const SECTIONS: Record<string, { title: string; desc: string; io: string }> = {
   },
 };
 
-export function generateStaticParams() {
-  return Object.keys(SECTIONS).map((section) => ({ section }));
-}
-
-export default function AdminSection({ params: { section } }: { params: { section: string } }) {
+export default async function AdminSection({ params: { section } }: { params: { section: string } }) {
+  await requireAdmin();
   const s = SECTIONS[section];
   if (!s) notFound();
   return (

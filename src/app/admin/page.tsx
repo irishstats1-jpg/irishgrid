@@ -1,6 +1,8 @@
 import { computePeriodMetrics } from '@/lib/data/metrics';
 import { DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET } from '@/lib/methodology';
 import { eur, energy, num, btc } from '@/lib/format';
+import { requireAdmin } from '@/lib/adminAuth';
+import { LogoutButton } from '@/components/LogoutButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,17 +19,25 @@ function health() {
   ];
 }
 
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
+  const { configured, email } = await requireAdmin();
   const m = computePeriodMetrics('last_365');
   const checks = health();
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-navy-900">Dashboard</h1>
-        <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Auth seam: gate this segment with Supabase Auth (single admin) before deploy. It is <code>noindex</code>.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-navy-900">Dashboard</h1>
+          {configured ? (
+            <p className="mt-1 text-sm text-navy-600">Signed in as {email}.</p>
+          ) : (
+            <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Auth not configured — set Supabase env vars to require login. Access is open in this mode.
+            </p>
+          )}
+        </div>
+        {configured && <LogoutButton />}
       </div>
 
       <section>
