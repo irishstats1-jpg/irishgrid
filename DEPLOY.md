@@ -61,6 +61,29 @@ is daily-only.
 
 ---
 
+## Hourly auto-updates (free Cloudflare Worker + Vercel)
+
+Vercel's free tier limits cron to once per day, but Cloudflare's free plan
+includes Cron Triggers up to every minute. A tiny Worker
+(`workers/cron-pinger/worker.js`) bridges the two: it pings the site's ingest
+endpoint hourly and warms the key pages so ISR re-renders with fresh data.
+
+Browser-only setup (~3 minutes):
+
+1. **dash.cloudflare.com → Workers & Pages → Create → Create Worker** → name it
+   `irishgrid-cron` → Deploy → **Edit code** → replace the contents with
+   `workers/cron-pinger/worker.js` → **Save and deploy**.
+2. Worker → **Settings → Variables and Secrets**:
+   - `SITE_URL` = `https://irishgrid.com` (plain text)
+   - `CRON_SECRET` = the same value you set in Vercel (choose *Encrypt*)
+3. Worker → **Settings → Triggers → Cron Triggers** → add two schedules:
+   - `0 * * * *` (hourly refresh)
+   - `15 6 * * *` (daily milestone job)
+
+Notes: the site's pages already revalidate hourly (ISR) when visited — the
+Worker guarantees freshness even with no traffic, and drives the daily job.
+The daily Vercel cron in `vercel.json` stays as a harmless backup.
+
 ## After deploy — checklist
 
 - [ ] Supabase: `schema.sql` + `seed.sql` run; admin user created
