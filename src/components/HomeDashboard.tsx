@@ -29,7 +29,7 @@ export function HomeDashboard({
   periods: PeriodKey[];
 }) {
   const td = useTranslations('durations');
-  const [period, setPeriod] = useState<PeriodKey>('last_week');
+  const [period, setPeriod] = useState<PeriodKey>('last_365');
   const [denom, setDenom] = useState<Denom>('billpayer');
   const [detailed, setDetailed] = useState(false);
 
