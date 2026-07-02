@@ -98,6 +98,20 @@ actuals** — labelled throughout.
 
 DB schema: `supabase/schema.sql` (with RLS). Cron/deploy: `wrangler.toml`.
 
+### Connecting Supabase
+
+1. In the Supabase **SQL Editor**, run **`supabase/schema.sql`** then **`supabase/seed.sql`**.
+2. Create the single admin user: Supabase **Authentication → Users → Add user** (email + password). That's the `/admin` login.
+3. Set env vars (locally in `.env.local`, in prod in your host):
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public, safe to expose
+   - `SUPABASE_SERVICE_ROLE_KEY` — **secret**; server-only (form writes). Never commit it.
+4. `/admin` then requires login; submissions, pledges and the blog CMS persist to Postgres.
+
+> Note: the CI/sandbox network policy may block outbound calls to your Supabase
+> host, so live DB calls can't be exercised from there — they work from your
+> deployment. Every read/write already falls back gracefully when the DB is
+> unreachable.
+
 ## Deployment (Cloudflare Pages + Workers)
 
 ```bash
