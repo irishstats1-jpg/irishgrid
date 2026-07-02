@@ -18,7 +18,8 @@ export const metadata: Metadata = {
 
 const TABLE_PERIODS: PeriodKey[] = ['yesterday', 'last_week', 'last_month', '2024', '2023', '2022'];
 
-export default function CurtailmentPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function CurtailmentPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   const metrics: Record<string, ReturnType<typeof computePeriodMetrics>> = {};
   for (const p of TABLE_PERIODS) metrics[p] = computePeriodMetrics(p);

@@ -6,13 +6,15 @@ import { getPost, getPosts } from '@/lib/data/blog';
 
 export const revalidate = 300;
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await getPost(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
   if (!post) return { title: 'Not found' };
   return { title: post.title, description: post.excerpt, openGraph: { title: post.title, description: post.excerpt, type: 'article' } };
 }
 
-export default async function BlogPostPage({ params: { locale, slug } }: { params: { locale: string; slug: string } }) {
+export default async function BlogPostPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+  const { locale, slug } = await params;
   setRequestLocale(locale);
   const post = await getPost(slug);
   if (!post) notFound();

@@ -36,7 +36,8 @@ const DATASETS = [
   },
 ];
 
-export default function DataPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function DataPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   return (
     <>

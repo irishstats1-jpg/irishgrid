@@ -7,7 +7,8 @@ import type { PeriodKey } from '@/lib/methodology/types';
 
 export const revalidate = 3600; // ISR: recompute hourly, aligned with the data cron (§9)
 
-export default async function HomePage({ params: { locale } }: { params: { locale: string } }) {
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   const t = await getT(locale);
 

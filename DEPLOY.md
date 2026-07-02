@@ -1,8 +1,8 @@
 # Deploying Irish Grid
 
-The app is a standard Next.js 14 (App Router) site with ISR, the Node runtime,
-and `next/og`. It builds clean (`npm run build`) and is ready to deploy. Pick a
-host below.
+The app is a Next.js 15 (App Router) site with ISR, the Node runtime, and
+`next/og`. It builds clean (`npm run build`) and is ready to deploy. Cloudflare
+(Path A) is the primary, brief-aligned target and is wired via OpenNext.
 
 ## Environment variables (both paths)
 
@@ -19,33 +19,45 @@ host below.
 
 ---
 
-## Path A — Vercel (recommended: zero code changes, fastest)
+## Path A — Cloudflare Workers via OpenNext (recommended, wired & build-verified)
 
-Everything built here works on Vercel as-is (ISR, Node runtime, `next/og`, cron).
+The app runs on Next 15 with the `@opennextjs/cloudflare` adapter; the OpenNext
+build has been verified locally (produces `.open-next/worker.js`). Node runtime,
+ISR, `next/og` and middleware all work.
 
-1. Import the GitHub repo at vercel.com (framework auto-detected as Next.js).
-2. Add the env vars above.
-3. Deploy. Cron is already configured in `vercel.json` (hourly + daily). Set
-   `CRON_SECRET` in Vercel so the cron calls are authorized.
-4. **Domain:** in Vercel add your domain; in Cloudflare DNS add the CNAME/A
-   records Vercel shows (keep the domain registered/proxied on Cloudflare).
+**One-time setup**
+1. `npm install`
+2. `npx wrangler login` (authorise your Cloudflare account)
+3. Set public vars in `wrangler.toml` `[vars]` (or the dashboard):
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`
+4. Set secrets:
+   ```
+   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+   npx wrangler secret put MAKE_SOCIAL_WEBHOOK_SECRET
+   # optional: RESEND_API_KEY, CONTACT_NOTIFY_EMAIL, OPENAI_API_KEY
+   ```
 
-That's a fully live site.
+**Deploy**
+```
+npm run deploy      # opennextjs-cloudflare build && deploy
+npm run preview     # test the Workers build locally first
+```
 
-## Path B — Cloudflare (matches the brief; needs an adapter step)
+**Cron** — the two schedules (hourly + daily) are in `wrangler.toml` `[triggers]`
+and call `/api/cron/ingest`, authorized by `MAKE_SOCIAL_WEBHOOK_SECRET`.
 
-Cloudflare's current Next adapters have a version requirement:
+**Domain** — Cloudflare dashboard → Workers & Pages → your Worker → Settings →
+Domains & Routes → add your custom domain. Set `NEXT_PUBLIC_SITE_URL` to match.
 
-- **`@opennextjs/cloudflare`** (recommended, supports the Node runtime, ISR,
-  `next/og`) requires **Next 15**.
-- **`@cloudflare/next-on-pages`** requires all dynamic routes to use the **edge
-  runtime**.
+**ISR note** — for persistent caching across instances, add an R2 incremental
+cache in `open-next.config.ts` (see the adapter docs). It works without it too.
 
-So Cloudflare needs either a **Next 15 upgrade** (then OpenNext) or an
-**edge-runtime conversion** (then next-on-pages). Both are mechanical but should
-be verified with a real deploy. `wrangler.toml` (Cron Triggers) and
-`.dev.vars.example` are already in place for when you choose one. Ask and this
-upgrade can be done + built as a follow-up.
+## Path B — Vercel (alternative, zero extra setup)
+
+Everything also works on Vercel as-is. Import the repo (auto-detected), add the
+env vars, deploy. Cron is in `vercel.json` (set `CRON_SECRET`). Point the domain
+via Cloudflare DNS. Note: Vercel's free tier is non-commercial and its free cron
+is daily-only.
 
 ---
 

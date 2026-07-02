@@ -13,7 +13,7 @@ export function supabaseConfigured(): boolean {
 }
 
 export async function getAdminUser(): Promise<{ email?: string } | null> {
-  const token = cookies().get(ADMIN_COOKIE)?.value;
+  const token = (await cookies()).get(ADMIN_COOKIE)?.value;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!token || !url || !key) return null;

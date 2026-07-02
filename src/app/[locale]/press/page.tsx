@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   description: 'Boilerplate, key figures, logos and approved cards for journalists covering Ireland’s electricity grid and curtailment.',
 };
 
-export default function PressPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function PressPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   const y = computePeriodMetrics('2024');
   const wastedShare = y.producedMwh > 0 ? (y.wastedMwh / (y.producedMwh + y.wastedMwh)) * 100 : 0;

@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   description: 'Sign the Irish Grid pledge: end the waste of clean energy and explore flexible demand to soak up curtailment, stabilise the grid and keep bills down.',
 };
 
-export default async function PledgePage({ params: { locale } }: { params: { locale: string } }) {
+export default async function PledgePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   const count = await getPledgeCount();
   return (

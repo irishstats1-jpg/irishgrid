@@ -49,7 +49,8 @@ function Row({ k, v }: { k: string; v: string }) {
   );
 }
 
-export default function AboutPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   return (
     <>

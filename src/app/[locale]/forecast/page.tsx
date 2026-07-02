@@ -9,7 +9,8 @@ export const metadata: Metadata = {
     "A scenario-based projection (not a prediction) of how Ireland's renewable capacity, curtailment, and potential per-household savings from flexible mining could grow to ~2046, with adjustable assumptions and clear caveats.",
 };
 
-export default function ForecastPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function ForecastPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   return (
     <>

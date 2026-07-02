@@ -29,7 +29,8 @@ const OBJECTIONS = [
   },
 ];
 
-export default function ProposalPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function ProposalPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   return (
     <>

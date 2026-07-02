@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: 'How Irish Grid handles the small amount of data collected through its contact, get-involved and pledge forms.',
 };
 
-export default function PrivacyPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function PrivacyPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   return (
     <>

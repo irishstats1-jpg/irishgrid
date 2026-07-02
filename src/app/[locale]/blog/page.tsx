@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   description: 'Analysis and explainers on Ireland’s grid, curtailment, and the case for flexible mining load.',
 };
 
-export default async function BlogPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   const posts = await getPosts();
   return (

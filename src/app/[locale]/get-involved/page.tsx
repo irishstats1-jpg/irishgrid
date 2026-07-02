@@ -9,7 +9,8 @@ export const metadata: Metadata = {
     'Four ways to help end clean-energy waste in Ireland: request a policymaker briefing, make an investor/partner enquiry, host a pilot site, or volunteer.',
 };
 
-export default function GetInvolvedPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function GetInvolvedPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
   return (
     <>

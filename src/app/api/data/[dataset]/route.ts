@@ -17,11 +17,12 @@ function toCsv(rows: Array<Record<string, unknown>>): string {
 
 export async function GET(
   request: Request,
-  { params }: { params: { dataset: string } },
+  { params }: { params: Promise<{ dataset: string }> },
 ) {
+  const { dataset } = await params;
   let rows: Array<Record<string, unknown>> = [];
 
-  switch (params.dataset) {
+  switch (dataset) {
     case 'generation-snapshots':
       rows = getSeries().map((d) => ({
         date: d.date,
@@ -83,7 +84,7 @@ export async function GET(
   return new Response(toCsv(rows), {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="irishgrid-${params.dataset}.csv"`,
+      'Content-Disposition': `attachment; filename="irishgrid-${dataset}.csv"`,
       'Cache-Control': 'public, max-age=3600',
     },
   });

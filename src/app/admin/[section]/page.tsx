@@ -49,8 +49,9 @@ const SECTIONS: Record<string, { title: string; desc: string; io: string }> = {
   },
 };
 
-export default async function AdminSection({ params: { section } }: { params: { section: string } }) {
+export default async function AdminSection({ params }: { params: Promise<{ section: string }> }) {
   await requireAdmin();
+  const { section } = await params;
   const s = SECTIONS[section];
   if (!s) notFound();
   return (
