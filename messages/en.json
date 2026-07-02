@@ -1,12 +1,12 @@
 {
   "brand": {
     "name": "Irish Grid",
-    "tagline": "What's really powering Ireland — and what we waste",
+    "tagline": "More renewables. Lower bills. A grid that wastes nothing.",
     "independence": "Independent · not affiliated with EirGrid or SONI"
   },
   "nav": {
-    "home": "Sources & Cost",
-    "curtailment": "Curtailment",
+    "home": "Cost",
+    "curtailment": "Curtailment payments",
     "proposal": "Proposal",
     "forecast": "Forecast",
     "getInvolved": "Get Involved",

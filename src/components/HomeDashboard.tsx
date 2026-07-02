@@ -6,7 +6,7 @@ import type { PeriodKey, FuelType } from '@/lib/methodology/types';
 import type { PeriodMetrics } from '@/lib/data/metrics';
 import { GENERATORS, FUEL_LABELS } from '@/lib/data/generators';
 import { IrelandMap, type MapGenerator } from './IrelandMap';
-import { FuelMixChart, FuelMixDonut, TrendChart } from './charts';
+import { FuelMixChart, FuelMixDonut, MoneyChart } from './charts';
 import { EstimateBadge, ActualBadge, NotFinancialAdvice, Takeaway } from './ui';
 import { eur, energy, num } from '@/lib/format';
 import {
@@ -55,21 +55,47 @@ export function HomeDashboard({
   const savingPer = denom === 'billpayer' ? m.savingPerBillpayerEur : m.savingPerPersonEur;
   const wastedShare = m.producedMwh > 0 ? (m.wastedMwh / (m.producedMwh + m.wastedMwh)) * 100 : 0;
 
-  // Derived daily trends for the cost + could-have-saved charts (§5.1). Each day's
-  // wasted energy runs through the same cost and BTC-savings model as the panel.
-  const derivedSeries = useMemo(
-    () =>
-      series.map((d) => {
-        const wasted = Number(d.wasted) || 0;
-        const cost = computeCost({ totalMwh: wasted }, DEFAULT_COST_ASSUMPTIONS, {
-          nBillpayers: DEFAULT_ASSUMPTIONS.nBillpayers,
-          nPeople: DEFAULT_ASSUMPTIONS.nPeople,
-        });
-        const btc = computeBtcSavings(wasted, 24, DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET);
-        return { date: d.date as string, cost: Math.round(cost.costEur), saved: Math.round(btc.valueEur) };
-      }),
-    [series],
-  );
+  // Aggregate the daily series into a small number of readable buckets
+  // (365 daily points are unreadable — a policymaker should be able to take the
+  // chart in at a glance). Fuels are grouped (coal/oil → other) for the same reason.
+  const { mixSeries, moneySeries } = useMemo(() => {
+    if (series.length === 0) return { mixSeries: [], moneySeries: [] };
+    // ≤ 31 points → daily; otherwise bucket by calendar month.
+    const monthly = series.length > 31;
+    const buckets = new Map<string, { days: number; wind: number; solar: number; hydro: number; imports: number; gas: number; other: number; wasted: number }>();
+    const label = (iso: string) => {
+      if (!monthly) return iso.slice(5); // mm-dd
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-IE', { month: 'short', year: '2-digit' });
+    };
+    for (const d of series) {
+      const key = label(d.date as string);
+      const b = buckets.get(key) ?? { days: 0, wind: 0, solar: 0, hydro: 0, imports: 0, gas: 0, other: 0, wasted: 0 };
+      b.days += 1;
+      b.wind += Number(d.wind) || 0;
+      b.solar += Number(d.solar) || 0;
+      b.hydro += Number(d.hydro) || 0;
+      b.imports += Number(d.imports) || 0;
+      b.gas += Number(d.gas) || 0;
+      b.other += (Number(d.other) || 0) + (Number(d.oil) || 0) + (Number(d.coal) || 0);
+      b.wasted += Number(d.wasted) || 0;
+      buckets.set(key, b);
+    }
+    const mixSeries: Array<Record<string, number | string>> = [];
+    const moneySeries: Array<{ date: string; cost: number; saved: number }> = [];
+    const denominators = { nBillpayers: DEFAULT_ASSUMPTIONS.nBillpayers, nPeople: DEFAULT_ASSUMPTIONS.nPeople };
+    buckets.forEach((b, date) => {
+      mixSeries.push({ date, wind: b.wind, solar: b.solar, hydro: b.hydro, imports: b.imports, gas: b.gas, other: b.other });
+      const cost = computeCost({ totalMwh: b.wasted }, DEFAULT_COST_ASSUMPTIONS, denominators);
+      const btc = computeBtcSavings(b.wasted, b.days * 24, DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET);
+      moneySeries.push({ date, cost: Math.round(cost.costEur), saved: Math.round(btc.valueEur) });
+    });
+    return { mixSeries, moneySeries };
+  }, [series]);
+
+  const windShare = m.producedMwh > 0
+    ? ((m.sourceBreakdown.wind + m.sourceBreakdown.solar + m.sourceBreakdown.hydro) / m.producedMwh) * 100
+    : 0;
 
   return (
     <div>
@@ -128,7 +154,7 @@ export function HomeDashboard({
             sub={`≈ ${num(wastedShare, 1)}% of output`}
             tone="warn"
           />
-          <Stat label="Curtailment / constraint payments" value={eur(m.costEur, { compact: true })} tone="warn" />
+          <Stat label="Paid out for that switched-off energy" value={eur(m.costEur, { compact: true })} tone="warn" />
           <Stat label={`Cost per ${denom}`} value={eur(costPer)} tone="warn" />
 
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
@@ -144,30 +170,24 @@ export function HomeDashboard({
         </aside>
       </div>
 
-      {/* Below the fold: supporting charts */}
-      {series.length > 0 && (
+      {/* Below the fold: two digestible charts that carry the story */}
+      {mixSeries.length > 0 && (
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="card">
-            <h3 className="font-semibold text-navy-900">Fuel mix over time</h3>
-            <FuelMixChart data={series} />
+            <h3 className="font-semibold text-navy-900">Where Ireland&apos;s electricity came from</h3>
+            <FuelMixChart data={mixSeries} />
             <Takeaway>
-              Gas fills the gap whenever wind and solar fall short — and wind is dialled back when there&apos;s too much of it.
+              Clean sources supplied ≈ {num(windShare, 0)}% over this period. Whenever the wind drops, gas
+              (orange) fills the gap — and when there&apos;s too much wind, we switch it off.
             </Takeaway>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-navy-900">Wasted (dispatched-down) energy</h3>
-            <TrendChart data={series} dataKey="wasted" color="#e06d3b" yFormat={(v) => `${Math.round(v).toLocaleString()} MWh`} />
-            <Takeaway>Every spike is clean electricity Ireland generated but couldn&apos;t use.</Takeaway>
-          </div>
-          <div className="card">
-            <h3 className="font-semibold text-navy-900">Cost to billpayers</h3>
-            <TrendChart data={derivedSeries} dataKey="cost" color="#c2410c" yFormat={(v) => eur(v, { compact: true })} />
-            <Takeaway>Modelled compensation for dispatched-down energy — money that lands on bills.</Takeaway>
-          </div>
-          <div className="card">
-            <h3 className="font-semibold text-navy-900">Could have been saved (mined BTC)</h3>
-            <TrendChart data={derivedSeries} dataKey="saved" color="#059669" yFormat={(v) => eur(v, { compact: true })} />
-            <Takeaway>The value flexible mining could have recovered from the same surplus.</Takeaway>
+            <h3 className="font-semibold text-navy-900">The money: what waste cost vs what it could earn</h3>
+            <MoneyChart data={moneySeries} />
+            <Takeaway>
+              Over this period, ≈ {eur(m.costEur, { compact: true })} was paid out for energy we threw away —
+              while the same surplus could have earned ≈ {eur(m.btcValueEur, { compact: true })}.
+            </Takeaway>
           </div>
         </div>
       )}

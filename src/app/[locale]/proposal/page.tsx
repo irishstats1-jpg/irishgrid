@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { PageHeader, Section, Callout, NotFinancialAdvice } from '@/components/ui';
+import { ForecastExplorer } from '@/components/ForecastExplorer';
 import { DEFAULT_ASSUMPTIONS } from '@/lib/methodology';
 
 export const metadata: Metadata = {
@@ -35,7 +36,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
   return (
     <>
       <PageHeader
-        eyebrow="A proposal (clearly labelled)"
+        eyebrow="Step 3 · The solution (a clearly-labelled proposal)"
         title="Turn wasted clean energy into value — with flexible, interruptible mining load"
         intro={
           <>
@@ -113,6 +114,23 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
         <div className="mt-6"><NotFinancialAdvice /></div>
       </Section>
 
+      {/* Merged from the 20-year outlook: what the solution is worth over time */}
+      <Section title="Looking ahead: what this is worth over 20 years">
+        <p className="prose-body mb-3 max-w-3xl">
+          These are <strong>scenarios, not predictions</strong> — anchored on Ireland&apos;s published
+          capacity targets and the 2022–2024 dispatch-down trend. Move the sliders and watch the waste
+          curve, the recovered value, and the savings per household recompute live.
+        </p>
+        <Callout tone="warn" title="Read this first">
+          Long-range grid fixes — new transmission, storage, the Celtic Interconnector, a higher SNSP limit —
+          could reduce curtailment on their own, and Bitcoin&apos;s value is volatile. Treat every figure
+          below as an illustrative scenario output, with conservative defaults.
+        </Callout>
+        <div className="mt-6">
+          <ForecastExplorer />
+        </div>
+      </Section>
+
       <Section>
         <div className="rounded-2xl bg-navy-700 p-8 text-center text-white">
           <h2 className="text-2xl font-bold">Want to help make this happen?</h2>
@@ -122,7 +140,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/get-involved" className="btn-accent">Get involved</Link>
-            <Link href="/forecast" className="btn-outline !border-white !text-white hover:!bg-navy-600">See the 20-year outlook</Link>
+            <Link href="/pledge" className="btn-outline !border-white !text-white hover:!bg-navy-600">Sign the pledge</Link>
           </div>
         </div>
       </Section>

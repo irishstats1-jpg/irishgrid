@@ -1,12 +1,12 @@
 {
   "brand": {
     "name": "Irish Grid",
-    "tagline": "Cad atá ag cumhachtú na hÉireann — agus an méid a chuirimid amú",
+    "tagline": "Níos mó fuinneamh in-athnuaite. Billí níos ísle. Eangach nach gcuireann faic amú.",
     "independence": "Neamhspleách · gan bhaint le EirGrid ná SONI"
   },
   "nav": {
-    "home": "Foinsí & Costas",
-    "curtailment": "Ciorrú",
+    "home": "Costas",
+    "curtailment": "Íocaíochtaí ciorraithe",
     "proposal": "Moladh",
     "forecast": "Réamhaisnéis",
     "getInvolved": "Bí Páirteach",

@@ -4,16 +4,24 @@ import { Link } from '@/i18n/navigation';
 import { PageHeader, Section, Callout, NotFinancialAdvice, Takeaway } from '@/components/ui';
 import { PeriodTable } from '@/components/PeriodTable';
 import { ComparisonBars } from '@/components/charts';
+import { CurtailmentOutlookChart } from '@/components/CurtailmentOutlookChart';
 import { computePeriodMetrics } from '@/lib/data/metrics';
-import { computeReplacementCost, WHOLESALE_REF_EUR_PER_MWH } from '@/lib/methodology';
-import { eur, energy } from '@/lib/format';
+import {
+  computeForecast,
+  computeReplacementCost,
+  DEFAULT_ASSUMPTIONS,
+  DEFAULT_FORECAST_CONFIG,
+  FALLBACK_BTC_MARKET,
+  WHOLESALE_REF_EUR_PER_MWH,
+} from '@/lib/methodology';
+import { eur, energy, num } from '@/lib/format';
 import type { PeriodKey } from '@/lib/methodology/types';
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
-  title: 'Curtailment — the clean energy Ireland throws away',
+  title: 'Curtailment payments — Ireland pays to throw clean energy away',
   description:
-    'What dispatch-down (curtailment and constraint) is, why it raises electricity costs and emissions, and how much it costs Irish billpayers — with a like-for-like comparison against recovering the value with flexible mining.',
+    'What dispatch-down (curtailment and constraint) is, why billpayers end up paying for switched-off clean energy, how much it costs — and how fast it grows if nothing changes.',
 };
 
 const TABLE_PERIODS: PeriodKey[] = ['yesterday', 'last_week', 'last_month', '2024', '2023', '2022'];
@@ -31,18 +39,23 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
   ];
   const replacementCost = computeReplacementCost(y.wastedMwh, WHOLESALE_REF_EUR_PER_MWH);
 
+  // Merged from the 20-year outlook: business-as-usual curtailment growth.
+  const bau = computeForecast('bau', DEFAULT_FORECAST_CONFIG, DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET);
+  const bauSeries = bau.map((p) => ({ date: String(p.year), curtailment: Math.round(p.curtailmentGwh) }));
+  const bauEnd = bau[bau.length - 1];
+
   return (
     <>
       <PageHeader
-        eyebrow="The problem"
-        title="Ireland generates clean energy it cannot use"
+        eyebrow="Step 2 · The cost"
+        title="Ireland pays to throw clean energy away"
         intro={
           <>
             When there is more wind than the grid can safely absorb, generators are{' '}
-            <strong>dispatched down</strong> — told to produce less. That clean electricity is simply
-            lost. In 2024 an estimated <strong>{energy(y.wastedMwh)}</strong> was dispatched down in the
-            Republic, and the compensation attached to it costs billpayers money while gas is burned to
-            fill the gap.
+            <strong>dispatched down</strong> — told to produce less. The clean electricity is lost, many
+            generators are <strong>paid compensation</strong> for it, and gas is burned to fill the gap.
+            In 2024 alone an estimated <strong>{energy(y.wastedMwh)}</strong> was thrown away. That bill
+            lands on you.
           </>
         }
       />
@@ -72,7 +85,7 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
           Wind dispatch-down rose from about <strong>8.5% (2022)</strong> to <strong>10.7% (2023)</strong>{' '}
           to <strong>14.0% (2024)</strong>. Without matching grid, storage and flexible demand, adding more
           renewables means throwing away a bigger share of what we build — which undermines the economics of
-          new projects. <Link href="/forecast" className="font-medium text-sky-600 underline">See the 20-year outlook →</Link>
+          new projects.
         </Callout>
       </Section>
 
@@ -120,6 +133,50 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
               <Link href="/proposal" className="btn-accent mt-4">Read the proposal</Link>
             </div>
             <NotFinancialAdvice />
+          </div>
+        </div>
+      </Section>
+
+      {/* Merged from the 20-year outlook: where this heads if nothing changes */}
+      <Section title="If nothing changes, the bill keeps growing">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="card">
+            <h3 className="font-semibold text-navy-900">Projected energy thrown away per year</h3>
+            <CurtailmentOutlookChart data={bauSeries} />
+            <Takeaway>
+              A scenario, not a prediction — anchored on Ireland&apos;s published capacity targets and the
+              2022–2024 dispatch-down trend, with a business-as-usual grid.
+            </Takeaway>
+          </div>
+          <div className="space-y-4">
+            <p className="prose-body">
+              Ireland&apos;s renewable capacity is set to roughly triple by 2040. That&apos;s exactly what the
+              climate targets require — but on a business-as-usual grid, the waste grows with it. By{' '}
+              {bauEnd.year}, this scenario reaches about{' '}
+              <strong>{num(bauEnd.curtailmentGwh / 1000, 1)} TWh</strong> of clean electricity thrown away{' '}
+              <em>every year</em> — several times today&apos;s level, with the payments to match.
+            </p>
+            <p className="prose-body">
+              New wires, storage and interconnectors will help, but they take a decade to build. The question
+              is what to do with the surplus <em>in the meantime</em> — and whether it can pay for itself.
+            </p>
+            <Callout tone="info" title="Assumptions are adjustable">
+              The full interactive version of this projection — with sliders for growth pace, curtailment
+              rate and value assumptions — lives on the Proposal page.
+            </Callout>
+          </div>
+        </div>
+      </Section>
+
+      <Section>
+        <div className="rounded-2xl bg-navy-700 p-6 text-white md:p-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky-400">Next in the story</p>
+          <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <p className="max-w-2xl text-navy-50">
+              There&apos;s a way to turn this growing waste into value — flexible demand that buys only the
+              energy we&apos;d otherwise throw away, and switches off the instant the grid needs it.
+            </p>
+            <Link href="/proposal" className="btn-accent shrink-0">The proposal →</Link>
           </div>
         </div>
       </Section>

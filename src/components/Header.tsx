@@ -6,19 +6,17 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { Wordmark } from './Wordmark';
 import { LanguageToggle } from './LanguageToggle';
 
+// The header tells the story in three steps: the problem (Cost), what it costs
+// us (Curtailment payments), and the solution (Proposal). Everything else lives
+// in the footer.
 const NAV = [
   { href: '/', key: 'home' },
   { href: '/curtailment', key: 'curtailment' },
   { href: '/proposal', key: 'proposal' },
-  { href: '/forecast', key: 'forecast' },
-  { href: '/get-involved', key: 'getInvolved' },
-  { href: '/blog', key: 'blog' },
-  { href: '/about', key: 'about' },
 ] as const;
 
 export function Header() {
   const t = useTranslations('nav');
-  const tb = useTranslations('brand');
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -27,9 +25,6 @@ export function Header() {
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3" aria-label="Irish Grid home">
           <Wordmark className="h-8 w-auto" />
-          <span className="hidden text-xs font-medium text-sky-400 sm:block">
-            {tb('independence')}
-          </span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">

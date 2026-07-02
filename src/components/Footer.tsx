@@ -57,7 +57,8 @@ export function Footer() {
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="Footer">
             <Link href="/curtailment" className="hover:text-white">{tn('curtailment')}</Link>
             <Link href="/proposal" className="hover:text-white">{tn('proposal')}</Link>
-            <Link href="/forecast" className="hover:text-white">{tn('forecast')}</Link>
+            <Link href="/get-involved" className="hover:text-white">{tn('getInvolved')}</Link>
+            <Link href="/blog" className="hover:text-white">{tn('blog')}</Link>
             <Link href="/about" className="hover:text-white">{tn('about')}</Link>
             <Link href="/press" className="hover:text-white">{tn('press')}</Link>
             <Link href="/pledge" className="hover:text-white">{tn('pledge')}</Link>

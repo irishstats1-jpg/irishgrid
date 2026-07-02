@@ -20,7 +20,8 @@ import {
 import { FUEL_COLORS, FUEL_LABELS } from '@/lib/data/generators';
 import type { FuelType } from '@/lib/methodology/types';
 
-const RENEWABLE_ORDER: FuelType[] = ['wind', 'solar', 'hydro', 'gas', 'oil', 'other', 'imports'];
+// Grouped for readability: coal/oil are folded into "other" upstream.
+const RENEWABLE_ORDER: FuelType[] = ['wind', 'solar', 'hydro', 'imports', 'gas', 'other'];
 
 /** Stacked area of fuel mix over time (MWh/day). */
 export function FuelMixChart({ data }: { data: Array<Record<string, number | string>> }) {
@@ -88,6 +89,39 @@ export function FuelMixDonut({ breakdown }: { breakdown: Record<FuelType, number
         <Tooltip formatter={(v: number) => `${Math.round(v).toLocaleString()} MWh`} />
         <Legend wrapperStyle={{ fontSize: 11 }} />
       </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** Two-series money view: what waste cost vs what it could have earned. */
+export function MoneyChart({
+  data,
+}: {
+  data: Array<{ date: string; cost: number; saved: number }>;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e6ecf5" />
+        <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={24} />
+        <YAxis
+          tick={{ fontSize: 12 }}
+          tickFormatter={(v) => `€${Math.round(Number(v) / 1e6)}m`}
+          width={52}
+        />
+        <Tooltip
+          formatter={(v: number, n) => [
+            `€${Math.round(v).toLocaleString()}`,
+            n === 'cost' ? 'Paid out for wasted energy' : 'Value mining could have recovered',
+          ]}
+        />
+        <Legend
+          formatter={(v) => (v === 'cost' ? 'Paid out for wasted energy' : 'Value mining could have recovered')}
+          wrapperStyle={{ fontSize: 12 }}
+        />
+        <Area type="monotone" dataKey="cost" stroke="#c2410c" fill="#c2410c" fillOpacity={0.2} strokeWidth={2} />
+        <Area type="monotone" dataKey="saved" stroke="#059669" fill="#059669" fillOpacity={0.25} strokeWidth={2} />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }
