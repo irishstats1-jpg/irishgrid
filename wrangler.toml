@@ -6,10 +6,16 @@
 # OPENAI_API_KEY, RESEND_API_KEY, MAKE_SOCIAL_WEBHOOK_SECRET) and public vars
 # (NEXT_PUBLIC_*) in the [vars] block or the dashboard.
 
-name = "irish-grid"
+# Name must match the Worker created in the Cloudflare dashboard.
+name = "irishgrid"
 main = "custom-worker.js"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+# Safety net: ensures the OpenNext build runs even if the dashboard build
+# command is empty — `wrangler deploy` executes this first.
+[build]
+command = "npx opennextjs-cloudflare build"
 
 [assets]
 directory = ".open-next/assets"
