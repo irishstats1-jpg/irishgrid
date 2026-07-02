@@ -158,14 +158,25 @@ alter table submissions enable row level security;
 alter table pledges enable row level security;
 alter table press_assets enable row level security;
 
+-- Drop-then-create so the script is safe to re-run (create policy is not idempotent).
+drop policy if exists "public read generators" on generators;
 create policy "public read generators" on generators for select using (true);
+drop policy if exists "public read snapshots" on generation_snapshots;
 create policy "public read snapshots" on generation_snapshots for select using (true);
+drop policy if exists "public read actuals" on dispatch_down_actuals;
 create policy "public read actuals" on dispatch_down_actuals for select using (true);
+drop policy if exists "public read period_metrics" on period_metrics;
 create policy "public read period_metrics" on period_metrics for select using (true);
+drop policy if exists "public read btc_market" on btc_market;
 create policy "public read btc_market" on btc_market for select using (true);
+drop policy if exists "public read wholesale" on wholesale_prices;
 create policy "public read wholesale" on wholesale_prices for select using (true);
+drop policy if exists "public read forecast" on forecast_points;
 create policy "public read forecast" on forecast_points for select using (true);
+drop policy if exists "public read published posts" on blog_posts;
 create policy "public read published posts" on blog_posts for select using (status = 'published');
+drop policy if exists "public read translations" on blog_post_translations;
 create policy "public read translations" on blog_post_translations for select using (true);
+drop policy if exists "public read press" on press_assets;
 create policy "public read press" on press_assets for select using (true);
 -- submissions/pledges: inserts happen via the service role in API routes; no public policies.
