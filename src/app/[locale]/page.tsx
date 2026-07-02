@@ -2,7 +2,7 @@ import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation';
 import { getT } from '@/i18n/server';
 import { HomeDashboard } from '@/components/HomeDashboard';
-import { ALL_PERIODS, computePeriodMetrics, getFuelMixSeries, type PeriodMetrics } from '@/lib/data/metrics';
+import { ALL_PERIODS, computePeriodMetrics, getFuelMixSeries, type PeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import type { PeriodKey } from '@/lib/methodology/types';
 
 export const revalidate = 3600; // ISR: recompute hourly, aligned with the data cron (§9)
@@ -12,6 +12,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale);
   const t = await getT(locale);
 
+  await refreshLiveData();
   const metricsByPeriod: Record<string, PeriodMetrics> = {};
   const seriesByPeriod: Record<string, Array<Record<string, number | string>>> = {};
   for (const p of ALL_PERIODS) {
@@ -62,17 +63,21 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="card text-center">
             <p className="text-3xl font-bold text-navy-900">8.5%</p>
-            <p className="mt-1 text-sm text-navy-600">of available wind wasted in 2022</p>
+            <p className="mt-1 text-sm text-navy-600">of available wind turned away in 2022</p>
           </div>
           <div className="card text-center">
             <p className="text-3xl font-bold text-orange-600">10.7%</p>
-            <p className="mt-1 text-sm text-navy-600">wasted in 2023</p>
+            <p className="mt-1 text-sm text-navy-600">turned away in 2023</p>
           </div>
           <div className="card text-center">
             <p className="text-3xl font-bold text-orange-700">14.0%</p>
-            <p className="mt-1 text-sm text-navy-600">wasted in 2024 — and rising</p>
+            <p className="mt-1 text-sm text-navy-600">turned away in 2024 — and rising</p>
           </div>
         </div>
+        <p className="mt-2 text-xs text-navy-400">
+          Wind dispatch-down across the island of Ireland, from EirGrid&apos;s annual Constraint &amp;
+          Curtailment reports. Republic-only volumes: 989 → 1,124 → 1,266 GWh.
+        </p>
         <div className="mt-8 rounded-2xl bg-navy-700 p-6 text-white md:p-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-sky-400">Next in the story</p>
           <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

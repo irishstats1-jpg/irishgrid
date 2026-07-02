@@ -1,11 +1,12 @@
-import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import { eur, energy } from '@/lib/format';
 
 export const revalidate = 3600;
 
 // "Live wasted-energy cost" counter widget (§14). Embed:
 // <iframe src="https://irishgrid.com/widget/cost" width="360" height="200" style="border:0"></iframe>
-export default function CostWidget() {
+export default async function CostWidget() {
+  await refreshLiveData();
   const m = computePeriodMetrics('last_365');
   return (
     <div className="rounded-xl bg-navy-700 p-5 text-white" style={{ maxWidth: 360 }}>

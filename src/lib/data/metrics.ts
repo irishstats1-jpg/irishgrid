@@ -9,8 +9,13 @@ import {
   type Assumptions,
 } from '../methodology';
 import { buildYearSeries, type DaySeriesPoint } from './series';
-import { ANNUAL_GENERATION_GWH, getActual } from './dispatchDown';
+import {
+  ANNUAL_GENERATION_GWH,
+  DISPATCH_DOWN_ACTUALS,
+  type DispatchDownActual,
+} from './dispatchDown';
 import { GENERATORS } from './generators';
+import { fetchBtcMarket } from './live';
 
 const FUELS: FuelType[] = ['wind', 'solar', 'gas', 'hydro', 'coal', 'oil', 'other', 'imports'];
 
@@ -33,16 +38,68 @@ export interface PeriodMetrics {
   computedAt: string;
 }
 
-// ---- Config seams (swap for Supabase `assumptions` / live APIs in production) ----
+// ---- Live context (auto-updating) --------------------------------------------
+// Module-level state refreshed via refreshLiveData(): the BTC market comes from
+// CoinGecko/mempool (Next fetch cache, ~hourly) and dispatch-down actuals from
+// the Supabase `dispatch_down_actuals` table when configured. Both fall back to
+// the in-repo seeds, so nothing breaks when a source is unreachable.
+
+let _market: BtcMarket = { ...FALLBACK_BTC_MARKET };
+let _actuals: DispatchDownActual[] = DISPATCH_DOWN_ACTUALS;
+
+async function fetchActualsFromSupabase(): Promise<DispatchDownActual[] | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  try {
+    const res = await fetch(`${url}/rest/v1/dispatch_down_actuals?select=*&order=year.asc`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Array<Record<string, unknown>>;
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rows.map((r) => ({
+      year: Number(r.year),
+      region: 'ROI' as const,
+      source: String(r.source ?? ''),
+      gwh: Number(r.gwh ?? 0),
+      curtailmentGwh: Number(r.curtailment_gwh ?? 0),
+      constraintGwh: Number(r.constraint_gwh ?? 0),
+      windDispatchDownPct: 0,
+      notes: String(r.notes ?? ''),
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Refresh the live inputs (call from server components / route handlers before
+ * computing metrics). Safe to call often — underlying fetches are cached.
+ */
+export async function refreshLiveData(): Promise<void> {
+  const [market, actuals] = await Promise.all([fetchBtcMarket(), fetchActualsFromSupabase()]);
+  _market = market;
+  if (actuals) {
+    // DB rows override seeds per-year; seeds fill any missing years.
+    const byYear = new Map<number, DispatchDownActual>();
+    for (const a of DISPATCH_DOWN_ACTUALS) byYear.set(a.year, a);
+    for (const a of actuals) byYear.set(a.year, a);
+    _actuals = Array.from(byYear.values()).sort((a, b) => a.year - b.year);
+  }
+}
 
 export function getAssumptions(): Assumptions {
   return { ...DEFAULT_ASSUMPTIONS };
 }
 
 export function getBtcMarket(): BtcMarket {
-  // Production: fetch CoinGecko (price) + mempool.space (hashrate/difficulty),
-  // cache hourly, fall back to last-good. Here we return the documented fallback.
-  return { ...FALLBACK_BTC_MARKET };
+  return { ..._market };
+}
+
+function getActual(year: number): DispatchDownActual | undefined {
+  return _actuals.find((a) => a.year === year);
 }
 
 // Reference "now" is fixed to today's date so SSR is deterministic per day.

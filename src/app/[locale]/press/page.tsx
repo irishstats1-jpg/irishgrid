@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
 import { PageHeader, Section } from '@/components/ui';
-import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import { eur, energy, pct } from '@/lib/format';
 
 export const revalidate = 3600;
@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 export default async function PressPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  await refreshLiveData();
   const y = computePeriodMetrics('2024');
   const wastedShare = y.producedMwh > 0 ? (y.wastedMwh / (y.producedMwh + y.wastedMwh)) * 100 : 0;
 

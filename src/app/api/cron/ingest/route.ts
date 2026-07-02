@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchBtcMarket } from '@/lib/data/live';
-import { ALL_PERIODS, computePeriodMetrics, getSeries } from '@/lib/data/metrics';
+import { ALL_PERIODS, computePeriodMetrics, getBtcMarket, getSeries, refreshLiveData } from '@/lib/data/metrics';
 
 // Daily milestone detection (§9): flag a new record-waste day so a social draft
 // can be created. Returns the milestone (in production it writes a social_posts
@@ -44,7 +43,8 @@ async function runIngest(request: Request) {
   const { searchParams } = new URL(request.url);
   const job = searchParams.get('job') ?? 'hourly';
 
-  const market = await fetchBtcMarket();
+  await refreshLiveData();
+  const market = getBtcMarket();
 
   // Recompute the live/rolling period metrics.
   const recomputed = ALL_PERIODS.map((p) => {

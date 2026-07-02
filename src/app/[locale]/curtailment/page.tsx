@@ -5,7 +5,7 @@ import { PageHeader, Section, Callout, NotFinancialAdvice, Takeaway } from '@/co
 import { PeriodTable } from '@/components/PeriodTable';
 import { ComparisonBars } from '@/components/charts';
 import { CurtailmentOutlookChart } from '@/components/CurtailmentOutlookChart';
-import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import {
   computeForecast,
   computeReplacementCost,
@@ -29,6 +29,7 @@ const TABLE_PERIODS: PeriodKey[] = ['yesterday', 'last_week', 'last_month', '202
 export default async function CurtailmentPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  await refreshLiveData();
   const metrics: Record<string, ReturnType<typeof computePeriodMetrics>> = {};
   for (const p of TABLE_PERIODS) metrics[p] = computePeriodMetrics(p);
   const y = metrics['2025'];
@@ -82,11 +83,11 @@ export default async function CurtailmentPage({ params }: { params: Promise<{ lo
           </div>
         </div>
         <Callout tone="info" title="It gets worse as we build more wind">
-          Wind dispatch-down rose from about <strong>8.5% (2022)</strong> to <strong>10.7% (2023)</strong>{' '}
-          to <strong>14.0% (2024)</strong> — and an estimated <strong>15.5% (2025, provisional)</strong>.
-          Without matching grid, storage and flexible demand, adding more
-          renewables means throwing away a bigger share of what we build — which undermines the economics of
-          new projects.
+          Across the island, wind dispatch-down rose from <strong>8.5% (2022)</strong> to{' '}
+          <strong>10.7% (2023)</strong> to <strong>14.0% (2024)</strong> (EirGrid annual reports). In the
+          Republic alone that meant <strong>989 → 1,124 → 1,266 GWh</strong> of wind thrown away, plus solar.
+          Without matching grid, storage and flexible demand, adding more renewables means throwing away a
+          bigger share of what we build — which undermines the economics of new projects.
         </Callout>
       </Section>
 

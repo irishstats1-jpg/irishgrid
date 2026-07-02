@@ -17,11 +17,11 @@ const SEED_POSTS: BlogPost[] = [
     slug: 'ireland-wasted-a-record-amount-of-wind-in-2024',
     title: 'Ireland wasted a record amount of wind in 2024 — here’s what it cost',
     excerpt:
-      'Wind dispatch-down hit an estimated 14% in 2024. We break down how much clean energy was thrown away, why, and what it means for bills.',
+      'Across the island, wind dispatch-down hit 14% in 2024 — with 1,266 GWh thrown away in the Republic alone. We break down why, and what it means for bills.',
     author: 'Irish Grid',
     publishedAt: '2025-02-10',
     status: 'published',
-    body: `In 2024, the share of available wind energy that was dispatched down in the Republic of Ireland reached an estimated 14% — up from 10.7% in 2023 and 8.5% in 2022.
+    body: `In 2024, the share of available wind energy dispatched down across the island of Ireland reached 14.0% — up from 10.7% in 2023 and 8.5% in 2022. In the Republic alone, 1,266 GWh of wind was thrown away.
 
 Dispatch-down happens for two reasons. Curtailment is system-wide: there is more renewable generation than the grid can safely carry at once, bounded by the System Non-Synchronous Penetration (SNSP) limit. Constraint is local: the transmission network in a given area cannot move the power to where it is needed.
 

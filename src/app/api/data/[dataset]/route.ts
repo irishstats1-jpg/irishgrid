@@ -1,4 +1,4 @@
-import { getSeries, computePeriodMetrics, ALL_PERIODS } from '@/lib/data/metrics';
+import { getSeries, computePeriodMetrics, ALL_PERIODS, refreshLiveData } from '@/lib/data/metrics';
 import { DISPATCH_DOWN_ACTUALS } from '@/lib/data/dispatchDown';
 import { GENERATORS } from '@/lib/data/generators';
 
@@ -20,6 +20,7 @@ export async function GET(
   { params }: { params: Promise<{ dataset: string }> },
 ) {
   const { dataset } = await params;
+  await refreshLiveData();
   let rows: Array<Record<string, unknown>> = [];
 
   switch (dataset) {

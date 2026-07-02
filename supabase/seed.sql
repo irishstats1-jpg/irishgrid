@@ -25,10 +25,16 @@ insert into generators (id,name,fuel_type,capacity_mw,operator,lat,lng,region,is
 on conflict (id) do nothing;
 
 insert into dispatch_down_actuals (year,region,source,gwh,curtailment_gwh,constraint_gwh,notes) values
-  (2022,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2022',1350,900,450,'Seed figures — replace with exact report values on import.'),
-  (2023,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2023',2100,1450,650,'Seed figures — replace with exact report values on import.'),
-  (2024,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2024',3100,2250,850,'Seed figures — replace with exact report values on import.')
-on conflict (year,region) do nothing;
+  (2022,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2022',989,692,297,'ROI wind DD ~989 GWh (island 1,280 minus NI 291). Split approximated 70/30.'),
+  (2023,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2023',1124,787,337,'ROI wind DD 1,124 GWh = 8.9% of available wind. Split approximated 70/30.'),
+  (2024,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2024',1305,915,390,'ROI wind 1,266 GWh + solar 39 GWh. Split approximated 70/30.'),
+  (2025,'ROI','Provisional - extrapolated from the 2022-2024 ROI trend',1500,1050,450,'PROVISIONAL pending the official 2025 report - edit this row when published.')
+on conflict (year,region) do update set
+  source = excluded.source,
+  gwh = excluded.gwh,
+  curtailment_gwh = excluded.curtailment_gwh,
+  constraint_gwh = excluded.constraint_gwh,
+  notes = excluded.notes;
 
 -- Mining + cost assumptions (§7.4). Editable in /admin/assumptions.
 insert into assumptions (key, value, unit) values

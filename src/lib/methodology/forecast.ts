@@ -1,6 +1,6 @@
 // 20-year forecast engine (§7.5). A SCENARIO PROJECTION — clearly not a
 // prediction. Builds a renewable-capacity trajectory from published anchors,
-// scales curtailment with penetration (calibrated to the 8.5%→14% wind-DD
+// scales curtailment with penetration (calibrated to the ROI dispatch-down
 // trend), and applies the §7.3 BTC model to estimate per-household savings.
 
 import type { Assumptions, BtcMarket } from './types';
@@ -52,7 +52,7 @@ export const DEFAULT_FORECAST_CONFIG: ForecastConfig = {
   capacityFactor: 0.3,
   demandStartGwh: 35_000,
   demandGrowth: 0.02,
-  curtailmentBaseRate: 0.14, // 14% wind DD in 2024
+  curtailmentBaseRate: 0.1, // ROI renewable DD ≈ 8.8% in 2024, trend rising
   curtailmentRefCapacityGw: 6, // ≈ 2024 renewable capacity
   curtailmentSlopePerGw: 0.008,
   curtailmentMaxRate: 0.5,

@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import { eur, energy } from '@/lib/format';
 
 // Auto-generated Open Graph / Twitter card with the headline figure (§14).
@@ -9,6 +9,7 @@ export const contentType = 'image/png';
 export const alt = 'Irish Grid — clean energy Ireland wastes, and what it costs';
 
 export default async function OgImage() {
+  await refreshLiveData();
   const m = computePeriodMetrics('last_365');
   return new ImageResponse(
     (

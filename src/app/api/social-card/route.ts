@@ -1,4 +1,4 @@
-import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import type { PeriodKey } from '@/lib/methodology/types';
 import { eur, energy } from '@/lib/format';
 
@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const p = (searchParams.get('period') ?? 'week').toLowerCase();
   const { key, label } = PERIOD_MAP[p] ?? PERIOD_MAP.week;
+  await refreshLiveData();
   const m = computePeriodMetrics(key);
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import type { PeriodKey } from '@/lib/methodology/types';
 
 // Endpoint consumed by Make.com scenarios (§11). Returns the period's figures:
@@ -19,6 +19,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const periodParam = (searchParams.get('period') ?? 'week').toLowerCase();
   const periodKey = PERIOD_MAP[periodParam] ?? 'last_week';
+  await refreshLiveData();
   const m = computePeriodMetrics(periodKey);
 
   return NextResponse.json({

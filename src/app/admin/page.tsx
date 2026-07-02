@@ -1,4 +1,4 @@
-import { computePeriodMetrics } from '@/lib/data/metrics';
+import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
 import { DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET } from '@/lib/methodology';
 import { eur, energy, num, btc } from '@/lib/format';
 import { requireAdmin } from '@/lib/adminAuth';
@@ -21,6 +21,7 @@ function health() {
 
 export default async function AdminDashboard() {
   const { configured, email } = await requireAdmin();
+  await refreshLiveData();
   const m = computePeriodMetrics('last_365');
   const checks = health();
 
