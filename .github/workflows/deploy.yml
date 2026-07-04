@@ -22,12 +22,14 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # wrangler.toml's [build] hook runs the OpenNext build before deploying.
-      - name: Build and deploy Worker
+      - name: Build OpenNext bundle
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://irishgrid.com
+          NEXT_PUBLIC_SUPABASE_URL: https://blfygbmfpkrnaxrqcwhu.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZnlnYm1mcGtybmF4cnFjd2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjIwMDEsImV4cCI6MjA5ODQ5ODAwMX0.PpTMQWHRAOEnblC6vHmp0QppM9Gg9hXsJUeLNkWn0u8
+      - name: Deploy Worker
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: b1916a8694208875b44114d14aa3a9c6
-          NEXT_PUBLIC_SITE_URL: https://irishgrid.com
-          NEXT_PUBLIC_SUPABASE_URL: https://blfygbmfpkrnaxrqcwhu.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZnlnYm1mcGtybmF4cnFjd2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MjIwMDEsImV4cCI6MjA5ODQ5ODAwMX0.PpTMQWHRAOEnblC6vHmp0QppM9Gg9hXsJUeLNkWn0u8
