@@ -31,10 +31,11 @@ binding = "ASSETS"
 [observability]
 enabled = true
 
-# Hourly ingestion + daily milestone job (§9). The scheduled handler hits
-# /api/cron/ingest; set MAKE_SOCIAL_WEBHOOK_SECRET so the call is authorized.
-[triggers]
-crons = ["0 * * * *", "15 6 * * *"]
+# Cron Triggers are configured in the dashboard (Workers → irishgrid →
+# Settings → Triggers → Cron), not here: the deploy API token from the
+# "Edit Workers" template can't register schedules, which failed the whole
+# `wrangler deploy`. Add them there — schedules "0 * * * *" and "15 6 * * *".
+# The scheduled() handler in custom-worker.js runs whenever they fire.
 
 # Plain-text vars are REPLACED by wrangler deploy, so public config lives here.
 # Secrets (SUPABASE_SERVICE_ROLE_KEY, MAKE_SOCIAL_WEBHOOK_SECRET, RESEND/OPENAI
