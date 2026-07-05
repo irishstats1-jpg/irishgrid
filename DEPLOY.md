@@ -19,11 +19,29 @@ The app is a Next.js 15 (App Router) site with ISR, the Node runtime, and
 
 ---
 
-## Path A — Cloudflare Workers via OpenNext (recommended, wired & build-verified)
+## Path A — Cloudflare Workers via OpenNext (LIVE — deployed by GitHub Actions)
 
-The app runs on Next 15 with the `@opennextjs/cloudflare` adapter; the OpenNext
-build has been verified locally (produces `.open-next/worker.js`). Node runtime,
-ISR, `next/og` and middleware all work.
+The app runs on Next 15 with the `@opennextjs/cloudflare` adapter and is
+deployed automatically by `.github/workflows/deploy.yml` on every push to
+`main`. Node runtime, ISR, `next/og` and middleware all work.
+
+**How the live pipeline works (no local steps needed):**
+- Push to `main` → GitHub Actions runs on **Node 22** (wrangler 4 requires it).
+- Build step: `npx opennextjs-cloudflare build` (calls `next build` internally,
+  no recursion) → produces `.open-next/`.
+- Deploy step: `npx wrangler deploy`, authenticated by the repo secret
+  `CLOUDFLARE_API_TOKEN`, publishes the Worker `irishgrid`.
+- `wrangler.toml` routes it at the `irishgrid.com` custom domain
+  (`workers_dev = false`).
+
+**Cron Triggers — set these in the dashboard.** The deploy API token can't
+register schedules (it fails the whole `wrangler deploy`), so `[triggers]` was
+removed from `wrangler.toml`. Add them once in the dashboard: Workers & Pages →
+`irishgrid` → Settings → Triggers → Cron Triggers → add `0 * * * *` and
+`15 6 * * *`. The `scheduled()` handler in `custom-worker.js` runs when they
+fire. Until then, ISR still revalidates pages hourly on visits.
+
+### Legacy one-time local setup (only if deploying by hand)
 
 **One-time setup**
 1. `npm install`
