@@ -12,6 +12,14 @@ main = "custom-worker.js"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
+# Route the Worker at the custom domain (the zone lives on this Cloudflare
+# account). No workers.dev subdomain is registered, so disable that publish
+# target — the custom domain is the only route.
+workers_dev = false
+routes = [
+  { pattern = "irishgrid.com", custom_domain = true },
+]
+
 # Note: `npm run build` produces the OpenNext bundle (.open-next/). wrangler 4
 # delegates `wrangler deploy` to `opennextjs-cloudflare deploy`, which expects
 # that bundle to already exist — so build must run before deploy.
