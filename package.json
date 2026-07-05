@@ -5,8 +5,7 @@
   "description": "Irish Grid — an independent, data-driven advocacy site about the Republic of Ireland's electricity grid, curtailment waste, and flexible Bitcoin-mining load. Not affiliated with EirGrid or SONI.",
   "scripts": {
     "dev": "next dev",
-    "build": "opennextjs-cloudflare build",
-    "build:next": "next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
