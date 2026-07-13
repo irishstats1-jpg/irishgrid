@@ -6,12 +6,12 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { Wordmark } from './Wordmark';
 import { LanguageToggle } from './LanguageToggle';
 
-// The header tells the story in three steps: the problem (Cost), what it costs
-// us (Curtailment payments), and the solution (Proposal). Everything else lives
-// in the footer.
+// The header tells one story in three steps: the problem (clean energy we throw
+// away and pay for), the tool (what the Bitcoin network actually is), and the
+// solution (using that tool to fix the problem). Everything else is in the footer.
 const NAV = [
   { href: '/', key: 'home' },
-  { href: '/curtailment', key: 'curtailment' },
+  { href: '/bitcoin', key: 'bitcoin' },
   { href: '/proposal', key: 'proposal' },
 ] as const;
 

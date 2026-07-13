@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { locales } from '@/i18n/config';
 import { getPosts } from '@/lib/data/blog';
 
-const ROUTES = ['', '/curtailment', '/proposal', '/get-involved', '/blog', '/about', '/press', '/pledge', '/data', '/privacy'];
+const ROUTES = ['', '/bitcoin', '/proposal', '/get-involved', '/blog', '/about', '/press', '/pledge', '/data', '/privacy'];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://irishgrid.com';

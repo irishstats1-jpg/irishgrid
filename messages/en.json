@@ -5,16 +5,17 @@
     "independence": "Independent · not affiliated with EirGrid or SONI"
   },
   "nav": {
-    "home": "Cost",
+    "home": "The Problem",
     "curtailment": "Curtailment payments",
-    "proposal": "Proposal",
+    "proposal": "The Solution",
     "forecast": "Forecast",
     "getInvolved": "Get Involved",
     "blog": "Blog",
     "about": "About & Methodology",
     "press": "Press",
     "pledge": "Pledge",
-    "data": "Data"
+    "data": "Data",
+    "bitcoin": "The Bitcoin Network"
   },
   "common": {
     "estimate": "Modelled estimate",

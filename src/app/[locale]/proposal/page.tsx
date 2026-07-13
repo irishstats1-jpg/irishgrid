@@ -37,24 +37,49 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
     <>
       <PageHeader
         eyebrow="Step 3 · The solution (a clearly-labelled proposal)"
-        title="Turn wasted clean energy into value — with flexible, interruptible mining load"
+        title="Put the tool to work on the problem"
         intro={
           <>
-            This section is an <strong>advocacy proposal</strong>, kept separate from the neutral data
-            pages. The core idea is simple: put modular Bitcoin-mining units next to renewable sources so
-            they consume <strong>only otherwise-curtailed output</strong>, switching off instantly when the
-            grid needs the power.
+            <strong>Step 1</strong> showed the problem: clean energy Ireland throws away and pays for.{' '}
+            <strong>Step 2</strong> showed the tool: a flexible, interruptible, always-on energy buyer that
+            can sit anywhere and needs no subsidy. The solution is simply to <strong>point one at the
+            other</strong> — site modular Bitcoin-mining units next to renewables so they consume{' '}
+            <strong>only otherwise-curtailed output</strong>, switching off the instant the grid needs the
+            power. This section is a clearly-labelled <strong>advocacy proposal</strong>, kept separate from
+            the neutral data pages.
           </>
         }
       />
 
-      <Section title="The case">
+      <Section title="The case — whatever your politics">
         <p className="prose-body max-w-3xl">
           Ireland&apos;s renewable rollout is being held back by its own success: the more wind we build,
           the more we curtail, and curtailment undermines the economics of new projects. A flexible load
-          that pays for otherwise-wasted energy improves those economics, reduces the net cost of the
-          transition to billpayers, and helps stabilise the grid — all without competing with consumers.
+          that pays for otherwise-wasted energy fixes that from every angle at once.
         </p>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="card">
+            <h3 className="font-semibold text-navy-900">For households</h3>
+            <p className="prose-body mt-2 text-sm">
+              Revenue from rescued energy can offset the curtailment and constraint payments that currently
+              sit on every bill — putting downward pressure on what you pay.
+            </p>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-navy-900">For the climate</h3>
+            <p className="prose-body mt-2 text-sm">
+              Better project economics means more wind and solar actually get built, and none of this load
+              runs on gas — so it never adds fossil demand. It helps the transition, not hinders it.
+            </p>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-navy-900">For the taxpayer</h3>
+            <p className="prose-body mt-2 text-sm">
+              It is private capital, not public subsidy. It strengthens domestic energy independence and
+              competes with no home or business for power — it only ever buys the surplus.
+            </p>
+          </div>
+        </div>
       </Section>
 
       <Section title="The headline proposal">

@@ -5,16 +5,17 @@
     "independence": "Neamhspleách · gan bhaint le EirGrid ná SONI"
   },
   "nav": {
-    "home": "Costas",
+    "home": "An Fhadhb",
     "curtailment": "Íocaíochtaí ciorraithe",
-    "proposal": "Moladh",
+    "proposal": "An Réiteach",
     "forecast": "Réamhaisnéis",
     "getInvolved": "Bí Páirteach",
     "blog": "Blag",
     "about": "Fúinn & Modheolaíocht",
     "press": "Preas",
     "pledge": "Gealltanas",
-    "data": "Sonraí"
+    "data": "Sonraí",
+    "bitcoin": "Líonra Bitcoin"
   },
   "common": {
     "estimate": "Meastachán samhaltaithe",
