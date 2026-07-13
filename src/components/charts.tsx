@@ -78,18 +78,34 @@ export function FuelMixDonut({ breakdown }: { breakdown: Record<FuelType, number
   const data = (Object.keys(breakdown) as FuelType[])
     .filter((f) => breakdown[f] > 0)
     .map((f) => ({ name: FUEL_LABELS[f], value: breakdown[f], fuel: f }));
+  // The legend is rendered as normal-flow HTML below the chart rather than via
+  // Recharts' absolutely-positioned <Legend>, which overflows its container when
+  // it wraps to two rows and overlaps the stats beneath it.
   return (
-    <ResponsiveContainer width="100%" height={180}>
-      <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={1}>
-          {data.map((d) => (
-            <Cell key={d.fuel} fill={FUEL_COLORS[d.fuel]} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(v: number) => `${Math.round(v).toLocaleString()} MWh`} />
-        <Legend wrapperStyle={{ fontSize: 11 }} />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="mt-1">
+      <ResponsiveContainer width="100%" height={170}>
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={1}>
+            {data.map((d) => (
+              <Cell key={d.fuel} fill={FUEL_COLORS[d.fuel]} />
+            ))}
+          </Pie>
+          <Tooltip formatter={(v: number) => `${Math.round(v).toLocaleString()} MWh`} />
+        </PieChart>
+      </ResponsiveContainer>
+      <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs text-navy-700">
+        {data.map((d) => (
+          <li key={d.fuel} className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: FUEL_COLORS[d.fuel] }}
+              aria-hidden
+            />
+            {d.name}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
