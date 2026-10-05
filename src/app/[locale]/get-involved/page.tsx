@@ -1,26 +1,36 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
 import { PageHeader, Section } from '@/components/ui';
-import { GetInvolvedForms } from '@/components/GetInvolvedForms';
+import { GetInvolvedForms, type Pathway } from '@/components/GetInvolvedForms';
 
 export const metadata: Metadata = {
   title: 'Get involved',
   description:
-    'Four ways to help end clean-energy waste in Ireland: request a policymaker briefing, make an investor/partner enquiry, host a pilot site, or volunteer.',
+    'Request a briefing on dispatch-down and flexible demand, host or partner on a pilot at a constrained site, or support Irish Grid’s research.',
 };
 
-export default async function GetInvolvedPage({ params }: { params: Promise<{ locale: string }> }) {
+const PATHWAYS: Pathway[] = ['policymaker', 'pilot', 'volunteer'];
+
+export default async function GetInvolvedPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ pathway?: string; status?: string }>;
+}) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const { pathway, status } = await searchParams;
+  const initialPathway = PATHWAYS.includes(pathway as Pathway) ? (pathway as Pathway) : 'policymaker';
   return (
     <>
       <PageHeader
         eyebrow="Get involved"
-        title="Four ways to help turn wasted energy into value"
-        intro="Pick the pathway that fits you. Every submission reaches us directly and you'll get a confirmation by email."
+        title="Help put flexible demand on the policy agenda"
+        intro="Choose what fits you. Every message reaches us directly; we reply to each one."
       />
       <Section>
-        <GetInvolvedForms />
+        <GetInvolvedForms initialPathway={initialPathway} initialStatus={status} />
       </Section>
     </>
   );

@@ -1,37 +1,62 @@
 import { NextResponse } from 'next/server';
-import { storeSubmission, sendConfirmation, isValidEmail } from '@/lib/integrations';
+import { notifyOwner, sendEmail, storeSubmission } from '@/lib/integrations';
+import { isRateLimited } from '@/lib/rateLimit';
+import { type FieldSpec, isBot, LIMITS, readBody, validate } from '@/lib/validation';
 
-const VALID_TYPES = new Set(['policymaker', 'investor', 'pilot', 'volunteer']);
+// Get Involved enquiries. Each pathway has an allowlist of fields; anything
+// else the client sends is discarded, never stored.
+const PATHWAYS: Record<string, Record<string, FieldSpec>> = {
+  policymaker: {
+    name: { max: LIMITS.name, required: true },
+    org: { max: LIMITS.org },
+    role: { max: LIMITS.short },
+    email: { max: LIMITS.email, required: true, email: true },
+    ask: { max: LIMITS.long },
+  },
+  pilot: {
+    name: { max: LIMITS.name, required: true },
+    org: { max: LIMITS.org },
+    email: { max: LIMITS.email, required: true, email: true },
+    site: { max: LIMITS.short },
+    capacity: { max: LIMITS.short },
+    ask: { max: LIMITS.long },
+  },
+  volunteer: {
+    name: { max: LIMITS.name, required: true },
+    email: { max: LIMITS.email, required: true, email: true },
+    skills: { max: LIMITS.long },
+  },
+};
 
 export async function POST(request: Request) {
-  let body: Record<string, unknown>;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  const { body, isForm } = await readBody(request);
+  const reply = (status: string, http: number, extra: Record<string, unknown> = {}) =>
+    isForm
+      ? NextResponse.redirect(new URL(`/get-involved?status=${status}#forms`, request.url), 303)
+      : NextResponse.json({ status, ...extra }, { status: http });
+
+  if (!body) return reply('error', 400, { error: 'Invalid request' });
+  if (isBot(body)) return reply('ok', 200);
+  if (await isRateLimited(request, 'submission')) {
+    return reply('busy', 429, { error: 'Too many attempts from your connection. Please wait a minute and try again.' });
   }
 
-  const type = String(body.type ?? '');
-  if (!VALID_TYPES.has(type)) {
-    return NextResponse.json({ error: 'Unknown submission type' }, { status: 400 });
-  }
-  if (!isValidEmail(body.email)) {
-    return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
+  const type = typeof body.type === 'string' ? body.type : '';
+  const spec = PATHWAYS[type];
+  if (!spec) return reply('error', 400, { error: 'Unknown enquiry type' });
+  const v = validate(body, spec);
+  if (!v.ok) return reply('error', 400, { error: v.error });
+
+  const stored = await storeSubmission({ type, payload: v.values, created_at: new Date().toISOString(), handled: false });
+  if (!stored) {
+    return reply('unavailable', 503, { error: 'We couldn’t send your message just now. Please try again later.' });
   }
 
-  const { type: _t, ...payload } = body;
-  const result = await storeSubmission('submissions', {
-    type,
-    payload,
-    created_at: new Date().toISOString(),
-    handled: false,
-  });
-
-  await sendConfirmation(
-    body.email as string,
-    'Thanks — Irish Grid has received your submission',
-    'Thank you for getting in touch with Irish Grid. We have received your submission and will be in contact soon.\n\n— Irish Grid (independent; not affiliated with EirGrid or SONI)',
+  await notifyOwner(`New ${type} enquiry`, v.values);
+  await sendEmail(
+    v.values.email,
+    'Irish Grid has received your message',
+    'Thank you for getting in touch. We have received your message and will reply soon.\n\nIrish Grid is an independent, non-partisan research and advocacy site. It has no connection to EirGrid or SONI.',
   );
-
-  return NextResponse.json({ ok: true, ...result });
+  return reply('ok', 200);
 }

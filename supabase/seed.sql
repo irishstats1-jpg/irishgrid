@@ -24,17 +24,17 @@ insert into generators (id,name,fuel_type,capacity_mw,operator,lat,lng,region,is
   ('ewic','East-West Interconnector','imports',500,'EirGrid',53.48,-6.15,'Dublin (to GB)',true,'EirGrid connected generators')
 on conflict (id) do nothing;
 
-insert into dispatch_down_actuals (year,region,source,gwh,curtailment_gwh,constraint_gwh,notes) values
-  (2022,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2022',989,692,297,'ROI wind DD ~989 GWh (island 1,280 minus NI 291). Split approximated 70/30.'),
-  (2023,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2023',1124,787,337,'ROI wind DD 1,124 GWh = 8.9% of available wind. Split approximated 70/30.'),
-  (2024,'ROI','EirGrid Annual Renewable Energy Constraint & Curtailment Report 2024',1305,915,390,'ROI wind 1,266 GWh + solar 39 GWh. Split approximated 70/30.'),
-  (2025,'ROI','Provisional - extrapolated from the 2022-2024 ROI trend',1500,1050,450,'PROVISIONAL pending the official 2025 report - edit this row when published.')
-on conflict (year,region) do update set
-  source = excluded.source,
-  gwh = excluded.gwh,
-  curtailment_gwh = excluded.curtailment_gwh,
-  constraint_gwh = excluded.constraint_gwh,
-  notes = excluded.notes;
+-- Annual dispatch-down actuals. Reported years mirror the EirGrid/SONI annual
+-- Constraint & Curtailment reports (Republic of Ireland, wind). The site's code
+-- seeds are the reviewed source of truth for reported years; a database row only
+-- takes over a year that is missing or provisional in code. `do nothing` means
+-- re-running this file never overwrites corrected rows.
+insert into dispatch_down_actuals (year,region,method,source,source_url,gwh,curtailment_gwh,constraint_gwh,wind_pct,notes) values
+  (2022,'ROI','reported','EirGrid/SONI Annual Renewable Energy Constraint and Curtailment Report 2022','https://cms.eirgrid.ie/sites/default/files/publications/Annual-Renewable-Constraint-and-Curtailment-Report-2022-V1.0.pdf',988,null,null,8.3,'Wind only. Curtailment/constraint split for Ireland not captured.'),
+  (2023,'ROI','reported','EirGrid/SONI Annual Renewable Energy Constraint and Curtailment Report 2023','https://cms.eirgrid.ie/sites/default/files/publications/Annual-Renewable-Constraint-and-Curtailment-Report-2023-V1.0.pdf',1124,null,null,8.9,'Wind only. Curtailment/constraint split for Ireland not captured.'),
+  (2024,'ROI','reported','EirGrid/SONI Annual Renewable Energy Constraint and Curtailment Report 2024','https://cms.eirgrid.ie/sites/default/files/publications/Annual-Renewable-Constraint-and-Curtailment-Report-2024-V1.0.pdf',1266,633,633,10.1,'Wind only. Report: dispatch-down in Ireland was roughly equally due to curtailment and constraints.'),
+  (2025,'ROI','provisional','Provisional: preliminary 2025 rates (11.3% of available wind; constraint 6.6%, curtailment 4.7%); volume estimated by Irish Grid','https://climatejargonbuster.ie/kb/curtailment/',1500,624,876,11.3,'Volume is an estimate pending the official 2025 report. Replace this row when the report is published.')
+on conflict (year,region) do nothing;
 
 -- Mining + cost assumptions (§7.4). Editable in /admin/assumptions.
 insert into assumptions (key, value, unit) values

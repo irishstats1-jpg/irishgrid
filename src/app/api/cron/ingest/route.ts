@@ -30,7 +30,8 @@ function authorized(request: Request): boolean {
   const secrets = [process.env.MAKE_SOCIAL_WEBHOOK_SECRET, process.env.CRON_SECRET].filter(
     Boolean,
   ) as string[];
-  if (secrets.length === 0) return true; // no secret configured (dev) → allow
+  // No secret configured: allowed only in local development; production fails closed.
+  if (secrets.length === 0) return process.env.NODE_ENV !== 'production';
   const header = request.headers.get('authorization') ?? request.headers.get('x-cron-secret') ?? '';
   return secrets.some((s) => header === `Bearer ${s}` || header === s);
 }
