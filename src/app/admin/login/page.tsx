@@ -31,18 +31,18 @@ export default function AdminLogin() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold text-navy-900">Admin sign in</h1>
-      <p className="mt-1 text-sm text-navy-600">Single-admin access via Supabase Auth.</p>
-      <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded-lg border border-navy-100 bg-white p-6">
+      <h1 className="text-2xl font-semibold text-ink">Admin sign in</h1>
+      <p className="mt-1 text-sm text-ink-600">Single-admin access via Supabase Auth.</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded-sm border border-ink-200 bg-white p-6">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-navy-800">Email</label>
-          <input id="email" name="email" type="email" required className="w-full rounded-lg border border-navy-200 p-2.5 text-sm" />
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink-800">Email</label>
+          <input id="email" name="email" type="email" required className="w-full rounded-sm border border-ink-200 p-2.5 text-sm" />
         </div>
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-navy-800">Password</label>
-          <input id="password" name="password" type="password" required className="w-full rounded-lg border border-navy-200 p-2.5 text-sm" />
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-ink-800">Password</label>
+          <input id="password" name="password" type="password" required className="w-full rounded-sm border border-ink-200 p-2.5 text-sm" />
         </div>
-        {status === 'error' && <p className="text-sm text-orange-700">{error}</p>}
+        {status === 'error' && <p className="border-l-2 border-ink pl-2 text-sm font-medium text-ink">{error}</p>}
         <button type="submit" className="btn-primary w-full" disabled={status === 'submitting'}>
           {status === 'submitting' ? 'Signing in…' : 'Sign in'}
         </button>

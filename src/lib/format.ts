@@ -3,12 +3,13 @@
 export function eur(value: number, opts: { compact?: boolean; decimals?: number } = {}): string {
   const { compact = false, decimals } = opts;
   if (compact && Math.abs(value) >= 1000) {
-    return new Intl.NumberFormat('en-IE', {
-      style: 'currency',
-      currency: 'EUR',
-      notation: 'compact',
-      maximumFractionDigits: 1,
-    }).format(value);
+    // Formatted by hand rather than with Intl's compact notation: Node's and the
+    // browser's ICU disagree on it ("€152.0M" vs "€152M"), which caused React
+    // hydration mismatches on every page with a client-rendered € figure.
+    const abs = Math.abs(value);
+    const [div, suffix] = abs >= 1e9 ? [1e9, 'B'] : abs >= 1e6 ? [1e6, 'M'] : [1e3, 'K'];
+    const scaled = Math.round((abs / div) * 10) / 10;
+    return `${value < 0 ? '-' : ''}€${scaled}${suffix}`;
   }
   return new Intl.NumberFormat('en-IE', {
     style: 'currency',
@@ -17,15 +18,18 @@ export function eur(value: number, opts: { compact?: boolean; decimals?: number 
   }).format(value);
 }
 
-/** MWh → human GWh/MWh string. */
+/**
+ * MWh → human string, per the brand's unit rule (§07.2): TWh to one decimal at
+ * or above 1,000 GWh; GWh as whole numbers below; MWh under 1 GWh.
+ */
 export function energy(mwh: number): string {
   if (Math.abs(mwh) >= 1_000_000) {
-    return `${(mwh / 1_000_000).toLocaleString('en-IE', { maximumFractionDigits: 2 })} TWh`;
+    return `${(mwh / 1_000_000).toLocaleString('en-IE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} TWh`;
   }
   if (Math.abs(mwh) >= 1000) {
-    return `${(mwh / 1000).toLocaleString('en-IE', { maximumFractionDigits: 1 })} GWh`;
+    return `${Math.round(mwh / 1000).toLocaleString('en-IE')} GWh`;
   }
-  return `${mwh.toLocaleString('en-IE', { maximumFractionDigits: 0 })} MWh`;
+  return `${Math.round(mwh).toLocaleString('en-IE')} MWh`;
 }
 
 export function num(value: number, decimals = 0): string {

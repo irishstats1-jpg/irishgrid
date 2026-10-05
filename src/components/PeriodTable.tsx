@@ -5,18 +5,10 @@ import type { PeriodMetrics } from '@/lib/data/metrics';
 import type { PeriodKey } from '@/lib/methodology/types';
 import { DEFAULT_ASSUMPTIONS } from '@/lib/methodology';
 import { eur, energy } from '@/lib/format';
-import { EstimateBadge, ActualBadge } from './ui';
+import { approx, PERIOD_TAG } from '@/lib/basis';
+import { BasisTag } from './ui';
 
-const LABELS: Record<string, string> = {
-  yesterday: 'Day',
-  last_week: 'Week',
-  last_month: 'Month',
-  '2025': '2025',
-  '2024': '2024',
-  '2023': '2023',
-  '2022': '2022',
-  last_365: 'Last 365 days',
-};
+const METHOD_LABEL = { reported: 'Reported', provisional: 'Provisional', modelled: 'Modelled' } as const;
 
 export function PeriodTable({
   metrics,
@@ -26,16 +18,18 @@ export function PeriodTable({
   periods: PeriodKey[];
 }) {
   const [denom, setDenom] = useState<'household' | 'person'>('household');
+  const n = denom === 'household' ? DEFAULT_ASSUMPTIONS.nHouseholds : DEFAULT_ASSUMPTIONS.nPeople;
   return (
     <div>
       <div className="mb-3 flex justify-end">
-        <div className="flex rounded-md border border-navy-200 text-xs">
+        <div className="flex rounded-sm border border-ink-200 font-display text-[14px]" role="group" aria-label="Per">
           {(['household', 'person'] as const).map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => setDenom(d)}
-              className={`px-3 py-1.5 font-medium ${denom === d ? 'bg-sky-500 text-white' : 'text-navy-700'}`}
+              aria-pressed={denom === d}
+              className={`min-h-[32px] px-3 py-1 font-semibold ${denom === d ? 'bg-green-700 text-white' : 'text-ink-700'}`}
             >
               per {d}
             </button>
@@ -46,39 +40,41 @@ export function PeriodTable({
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Cost of curtailment to billpayers by period</caption>
           <thead>
-            <tr className="border-b border-navy-200 text-left text-navy-600">
-              <th scope="col" className="py-2 pr-4 font-semibold">Period</th>
-              <th scope="col" className="py-2 pr-4 font-semibold">Wasted energy</th>
-              <th scope="col" className="py-2 pr-4 font-semibold">Payments (€)</th>
-              <th scope="col" className="py-2 pr-4 font-semibold">Cost / {denom}</th>
-              <th scope="col" className="py-2 pr-4 font-semibold">If mined (€)</th>
-              <th scope="col" className="py-2 pr-4 font-semibold">Saved / {denom}</th>
-              <th scope="col" className="py-2 font-semibold">Basis</th>
+            <tr className="border-b border-ink-700 text-left">
+              <th scope="col" className="py-2 pr-4 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">Period</th>
+              <th scope="col" className="py-2 pr-4 text-right font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">Wasted</th>
+              <th scope="col" className="py-2 pr-4 text-right font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">Paid out</th>
+              <th scope="col" className="py-2 pr-4 text-right font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">Per {denom}</th>
+              <th scope="col" className="py-2 pr-4 text-right font-display text-[13px] font-medium uppercase tracking-[0.08em] text-orange-700">If mined†</th>
+              <th scope="col" className="py-2 pr-4 text-right font-display text-[13px] font-medium uppercase tracking-[0.08em] text-orange-700">Per {denom}†</th>
+              <th scope="col" className="py-2 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">Volume basis</th>
             </tr>
           </thead>
           <tbody>
             {periods.map((p) => {
               const m = metrics[p];
               if (!m) return null;
-              const cost =
-                denom === 'household' ? m.costEur / DEFAULT_ASSUMPTIONS.nHouseholds : m.costPerPersonEur;
-              const save =
-                denom === 'household' ? m.btcValueEur / DEFAULT_ASSUMPTIONS.nHouseholds : m.savingPerPersonEur;
               return (
-                <tr key={p} className="border-b border-navy-100">
-                  <th scope="row" className="py-2.5 pr-4 text-left font-medium text-navy-900">{LABELS[p] ?? p}</th>
-                  <td className="py-2.5 pr-4 text-orange-700">{energy(m.wastedMwh)}</td>
-                  <td className="py-2.5 pr-4">{eur(m.costEur, { compact: true })}</td>
-                  <td className="py-2.5 pr-4">{eur(cost)}</td>
-                  <td className="py-2.5 pr-4 text-emerald-700">{eur(m.btcValueEur, { compact: true })}</td>
-                  <td className="py-2.5 pr-4 text-emerald-700">{eur(save)}</td>
-                  <td className="py-2.5">{m.isEstimate ? <EstimateBadge label="est." /> : <ActualBadge label="actual" />}</td>
+                <tr key={p} className="border-b border-ink-200">
+                  <th scope="row" className="py-2.5 pr-4 text-left font-medium text-ink">{PERIOD_TAG[p] ?? p}</th>
+                  <td className="py-2.5 pr-4 text-right font-medium tabular-nums text-green-700">{approx(m)}{energy(m.wastedMwh)}</td>
+                  <td className="py-2.5 pr-4 text-right tabular-nums">≈ {eur(m.costEur, { compact: true })}</td>
+                  <td className="py-2.5 pr-4 text-right tabular-nums">≈ {eur(m.costEur / n)}</td>
+                  <td className="py-2.5 pr-4 text-right font-medium tabular-nums text-orange-700">≈ {eur(m.btcValueEur, { compact: true })}</td>
+                  <td className="py-2.5 pr-4 text-right font-medium tabular-nums text-orange-700">≈ {eur(m.btcValueEur / n)}</td>
+                  <td className="py-2.5">
+                    <BasisTag kind="method">{METHOD_LABEL[m.method]}</BasisTag>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+      <p className="mt-3 text-[13px] text-ink-600">
+        Volumes for 2022–2024 are reported in EirGrid&apos;s Constraint &amp; Curtailment reports; 2025 is provisional
+        until its report is published; shorter periods are modelled. All € figures are modelled (≈).
+      </p>
     </div>
   );
 }

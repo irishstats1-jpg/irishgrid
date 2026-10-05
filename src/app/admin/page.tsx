@@ -29,11 +29,11 @@ export default async function AdminDashboard() {
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-navy-900">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-ink">Dashboard</h1>
           {configured ? (
-            <p className="mt-1 text-sm text-navy-600">Signed in as {email}.</p>
+            <p className="mt-1 text-sm text-ink-600">Signed in as {email}.</p>
           ) : (
-            <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <p className="mt-1 rounded-sm border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700">
               Auth not configured — set Supabase env vars to require login. Access is open in this mode.
             </p>
           )}
@@ -42,22 +42,22 @@ export default async function AdminDashboard() {
       </div>
 
       <section>
-        <h2 className="mb-3 font-semibold text-navy-900">Data-source health</h2>
+        <h2 className="mb-3 font-semibold text-ink">Data-source health</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {checks.map((c) => (
-            <div key={c.name} className="rounded-lg border border-navy-100 bg-white p-4">
+            <div key={c.name} className="rounded-sm border border-ink-200 bg-white p-4">
               <div className="flex items-center justify-between">
-                <p className="font-medium text-navy-900">{c.name}</p>
-                <span className={`inline-block h-2.5 w-2.5 rounded-full ${c.ok ? 'bg-emerald-500' : 'bg-orange-400'}`} />
+                <p className="font-medium text-ink">{c.name}</p>
+                <span className={`inline-block h-2.5 w-2.5 rounded-full ${c.ok ? 'bg-green-500' : 'bg-ink-400'}`} />
               </div>
-              <p className="mt-1 text-xs text-navy-500">{c.ok ? 'Configured' : c.note ?? 'Not configured'}</p>
+              <p className="mt-1 text-xs text-ink-500">{c.ok ? 'Configured' : c.note ?? 'Not configured'}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 font-semibold text-navy-900">Latest headline figures (last 365 days)</h2>
+        <h2 className="mb-3 font-semibold text-ink">Latest headline figures (last 365 days)</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Fig label="Wasted energy" value={energy(m.wastedMwh)} />
           <Fig label="Cost to billpayers" value={eur(m.costEur, { compact: true })} />
@@ -67,10 +67,10 @@ export default async function AdminDashboard() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-semibold text-navy-900">Assumptions in effect</h2>
-        <div className="rounded-lg border border-navy-100 bg-white p-4 text-sm">
+        <h2 className="mb-3 font-semibold text-ink">Assumptions in effect</h2>
+        <div className="rounded-sm border border-ink-200 bg-white p-4 text-sm">
           <p>Efficiency {DEFAULT_ASSUMPTIONS.efficiencyJPerTh} J/TH · Uptime {Math.round(DEFAULT_ASSUMPTIONS.uptimeFactor * 100)}% · Pool fee {DEFAULT_ASSUMPTIONS.poolFee * 100}% · Reward {DEFAULT_ASSUMPTIONS.blockRewardBtc} BTC</p>
-          <p className="mt-1 text-navy-500">Billpayers {num(DEFAULT_ASSUMPTIONS.nBillpayers)} · BTC price {eur(FALLBACK_BTC_MARKET.priceEur, { compact: true })} (edit under Assumptions)</p>
+          <p className="mt-1 text-ink-500">Billpayers {num(DEFAULT_ASSUMPTIONS.nBillpayers)} · BTC price {eur(FALLBACK_BTC_MARKET.priceEur, { compact: true })} (edit under Assumptions)</p>
         </div>
       </section>
     </div>
@@ -79,9 +79,9 @@ export default async function AdminDashboard() {
 
 function Fig({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-navy-100 bg-white p-4">
-      <p className="text-xl font-bold text-navy-900">{value}</p>
-      <p className="mt-1 text-sm text-navy-600">{label}</p>
+    <div className="rounded-sm border border-ink-200 bg-white p-4">
+      <p className="text-xl font-semibold text-ink">{value}</p>
+      <p className="mt-1 text-sm text-ink-600">{label}</p>
     </div>
   );
 }

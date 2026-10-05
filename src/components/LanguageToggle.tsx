@@ -10,15 +10,15 @@ export function LanguageToggle() {
   const router = useRouter();
 
   return (
-    <div className="flex items-center rounded-md border border-navy-600 text-xs" role="group" aria-label="Language">
+    <div className="flex items-center rounded-sm border border-white/30 font-display text-[13px]" role="group" aria-label="Language">
       {locales.map((l) => (
         <button
           key={l}
           type="button"
           onClick={() => router.replace(pathname, { locale: l })}
           aria-current={l === locale ? 'true' : undefined}
-          className={`px-2.5 py-1.5 font-semibold uppercase transition ${
-            l === locale ? 'bg-sky-500 text-white' : 'text-navy-50 hover:bg-navy-600'
+          className={`min-h-[32px] px-2.5 py-1 font-semibold uppercase tracking-[0.08em] transition ${
+            l === locale ? 'bg-white text-peat' : 'text-white/85 hover:bg-peat-light'
           }`}
           title={localeNames[l]}
         >

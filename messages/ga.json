@@ -1,8 +1,9 @@
 {
   "brand": {
-    "name": "Irish Grid",
-    "tagline": "Níos mó fuinneamh in-athnuaite. Billí níos ísle. Eangach nach gcuireann faic amú.",
-    "independence": "Neamhspleách · gan bhaint le EirGrid ná SONI"
+    "name": "Eangach na hÉireann",
+    "tagline": "Cuir níos lú amú. Íoc níos lú. Tóg níos mó fuinnimh ghlain.",
+    "independence": "Neamhspleách. Gan bhaint le EirGrid ná SONI.",
+    "wordmark": "EANGACH NA hÉIREANN"
   },
   "nav": {
     "home": "An Fhadhb",
@@ -15,11 +16,11 @@
     "press": "Preas",
     "pledge": "Gealltanas",
     "data": "Sonraí",
-    "bitcoin": "Líonra Bitcoin"
+    "bitcoin": "An Líonra Bitcoin"
   },
   "common": {
-    "estimate": "Meastachán samhaltaithe",
-    "actual": "Fíorfhigiúr bliantúil oifigiúil",
+    "estimate": "Samhaltaithe",
+    "actual": "Tuairiscithe",
     "notFinancialAdvice": "Ní comhairle airgeadais ná infheistíochta é seo.",
     "perBillpayer": "in aghaidh an íocóra billí",
     "perPerson": "in aghaidh an duine",
@@ -38,14 +39,15 @@
     "2022": "2022"
   },
   "footer": {
-    "independenceTitle": "Neamhspleáchas",
-    "independenceBody": "Tionscadal neamhspleách is ea Irish Grid. Níl baint aige le EirGrid, SONI, ná le haon oibreoir córais.",
-    "financialTitle": "Séanadh airgeadais",
-    "financialBody": "Braitheann figiúirí Bitcoin ar phraghsanna margaidh luaineacha agus tá siad léiritheach. Ní comhairle airgeadais é aon rud ar an suíomh seo.",
-    "estimatesTitle": "Faoi na figiúirí",
-    "estimatesBody": "Is meastacháin shamhaltaithe iad figiúirí ciorraithe agus costais gearrthéarma. Úsáideann figiúirí bliantúla tuarascálacha oifigiúla EirGrid.",
+    "independenceTitle": "Neamhspleách",
+    "independenceBody": "Is suíomh neamhspleách é Eangach na hÉireann. Níl aon bhaint aige le EirGrid ná le SONI.",
+    "financialTitle": "† Figiúirí Bitcoin",
+    "financialBody": "Meastachán léiritheach ag praghas BTC agus deacracht an líonra ar an dáta a thaispeántar. Ní comhairle airgeadais é.",
+    "estimatesTitle": "Gach figiúr lena bhunús",
+    "estimatesBody": "Tá tréimhse agus foinse ag gach figiúr. Tuairiscítear méideanna bliantúla i dtuarascálacha Srianta & Ciorraithe EirGrid; tá tréimhsí gearra agus gach costas samhaltaithe (≈).",
     "sourcesTitle": "Foinsí sonraí",
     "contactTitle": "Teagmháil",
-    "rights": "© {year} Irish Grid. Tógtha ar shonraí poiblí."
+    "rights": "© {year} Irish Grid. Tógtha ar shonraí poiblí.",
+    "independenceLine": "Neamhspleách. Gan bhaint le EirGrid ná SONI."
   }
 }

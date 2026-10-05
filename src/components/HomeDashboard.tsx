@@ -4,11 +4,12 @@ import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { PeriodKey, FuelType } from '@/lib/methodology/types';
 import type { PeriodMetrics } from '@/lib/data/metrics';
-import { GENERATORS, FUEL_LABELS } from '@/lib/data/generators';
+import { GENERATORS } from '@/lib/data/generators';
 import { IrelandMap, type MapGenerator } from './IrelandMap';
 import { FuelMixChart, FuelMixDonut, MoneyChart } from './charts';
-import { EstimateBadge, ActualBadge, NotFinancialAdvice, Takeaway } from './ui';
+import { NotFinancialAdvice, PairedFigure, TagRow, Takeaway, WhyDiffer } from './ui';
 import { eur, energy, num } from '@/lib/format';
+import { approx, btcFigure, btcTags, costTags, methodTag, PERIOD_TAG, volumeTags } from '@/lib/basis';
 import {
   computeBtcSavings,
   computeCost,
@@ -25,17 +26,25 @@ export function HomeDashboard({
   metricsByPeriod,
   seriesByPeriod,
   periods,
+  headlinePeriod,
+  btcPriceEur,
+  asOf,
 }: {
   metricsByPeriod: Record<string, PeriodMetrics>;
   seriesByPeriod: Record<string, Array<Record<string, number | string>>>;
   periods: PeriodKey[];
+  /** The period the hero's headline figures use — differing views get a note. */
+  headlinePeriod: PeriodKey;
+  btcPriceEur: number;
+  asOf: string;
 }) {
   const td = useTranslations('durations');
-  const [period, setPeriod] = useState<PeriodKey>('2025');
+  const [period, setPeriod] = useState<PeriodKey>(headlinePeriod);
   const [denom, setDenom] = useState<Denom>('household');
   const [detailed, setDetailed] = useState(false);
 
   const m = metricsByPeriod[period];
+  const headline = metricsByPeriod[headlinePeriod];
   const series = useMemo(() => seriesByPeriod[period] ?? [], [seriesByPeriod, period]);
 
   // Modelled per-plant output (pro-rate fuel-type system generation by capacity).
@@ -53,21 +62,18 @@ export function HomeDashboard({
     });
   }, [detailed, m]);
 
-  // "Per household" is the layman-friendly headline (≈2.1m households, an
-  // assumptions-table value); "per person" (≈5.3m) is the alternative view.
-  const costPer =
-    denom === 'household' ? m.costEur / DEFAULT_ASSUMPTIONS.nHouseholds : m.costPerPersonEur;
-  const savingPer =
-    denom === 'household' ? m.btcValueEur / DEFAULT_ASSUMPTIONS.nHouseholds : m.savingPerPersonEur;
+  // "Per household" is the plain-English headline (≈2.1m households); "per
+  // person" (≈5.3m) is the alternative view.
+  const nDenom = denom === 'household' ? DEFAULT_ASSUMPTIONS.nHouseholds : DEFAULT_ASSUMPTIONS.nPeople;
+  const costPer = m.costEur / nDenom;
+  const savingPer = m.btcValueEur / nDenom;
   const wastedShare = m.producedMwh > 0 ? (m.wastedMwh / (m.producedMwh + m.wastedMwh)) * 100 : 0;
   const replacementCost = computeReplacementCost(m.wastedMwh, WHOLESALE_REF_EUR_PER_MWH);
 
-  // Aggregate the daily series into a small number of readable buckets
-  // (365 daily points are unreadable — a policymaker should be able to take the
-  // chart in at a glance). Fuels are grouped (coal/oil → other) for the same reason.
+  // Aggregate the daily series into a few readable buckets (365 daily points
+  // are unreadable). Coal/oil are folded into "other" for the same reason.
   const { mixSeries, moneySeries } = useMemo(() => {
     if (series.length === 0) return { mixSeries: [], moneySeries: [] };
-    // ≤ 31 points → daily; otherwise bucket by calendar month.
     const monthly = series.length > 31;
     const buckets = new Map<string, { days: number; wind: number; solar: number; hydro: number; imports: number; gas: number; other: number; wasted: number }>();
     const label = (iso: string) => {
@@ -100,47 +106,45 @@ export function HomeDashboard({
     return { mixSeries, moneySeries };
   }, [series]);
 
-  const windShare = m.producedMwh > 0
-    ? ((m.sourceBreakdown.wind + m.sourceBreakdown.solar + m.sourceBreakdown.hydro) / m.producedMwh) * 100
-    : 0;
+  const cleanShare =
+    m.producedMwh > 0 ? ((m.sourceBreakdown.wind + m.sourceBreakdown.solar + m.sourceBreakdown.hydro) / m.producedMwh) * 100 : 0;
 
   return (
     <div>
-      {/* Duration toggle */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium text-navy-700">Period:</span>
+      {/* Period selector */}
+      <div className="mb-5 flex flex-wrap items-center gap-2" role="group" aria-label="Period">
+        <span className="eyebrow mr-1">Period</span>
         {periods.map((p) => (
           <button
             key={p}
             type="button"
             onClick={() => setPeriod(p)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-              p === period ? 'bg-navy-700 text-white' : 'bg-navy-50 text-navy-700 hover:bg-navy-100'
+            aria-pressed={p === period}
+            className={`min-h-[36px] rounded-sm border px-3 py-1.5 font-display text-[15px] font-semibold tracking-[0.02em] transition ${
+              p === period ? 'border-peat bg-peat text-white' : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-100'
             }`}
           >
             {td(p)}
           </button>
         ))}
-        <span className="ml-1">{m.isEstimate ? <EstimateBadge /> : <ActualBadge />}</span>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        {/* Map */}
-        <div className="card">
+      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <div className="card self-start lg:sticky lg:top-24">
           <IrelandMap generators={mapGenerators} detailed={detailed} onToggleDetailed={() => setDetailed((v) => !v)} />
         </div>
 
-        {/* Stats panel */}
-        <aside className="card space-y-4" aria-label="Grid statistics for selected period">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-navy-900">The numbers</h2>
-            <div className="flex rounded-md border border-navy-200 text-xs">
+        <aside className="card space-y-5" aria-label="Grid statistics for selected period">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-[26px] leading-none">The numbers</h2>
+            <div className="flex rounded-sm border border-ink-200 font-display text-[14px]" role="group" aria-label="Per">
               {(['household', 'person'] as Denom[]).map((d) => (
                 <button
                   key={d}
                   type="button"
                   onClick={() => setDenom(d)}
-                  className={`px-2 py-1 font-medium ${denom === d ? 'bg-sky-500 text-white' : 'text-navy-700'}`}
+                  aria-pressed={denom === d}
+                  className={`min-h-[32px] px-2.5 py-1 font-semibold ${denom === d ? 'bg-green-700 text-white' : 'text-ink-700'}`}
                 >
                   per {d}
                 </button>
@@ -148,84 +152,103 @@ export function HomeDashboard({
             </div>
           </div>
 
-          <Stat label="Total energy produced" value={energy(m.producedMwh)} />
+          <TagRow
+            tags={[
+              { kind: 'period', label: PERIOD_TAG[period] },
+              { kind: 'scope', label: 'Republic only' },
+              { kind: 'method', label: methodTag(m) },
+            ]}
+          />
 
           <div>
-            <p className="text-sm font-medium text-navy-700">Breakdown by source</p>
+            <p className="text-sm text-ink-600">Total electricity generated</p>
+            <p className="figure text-[34px] text-ink">≈ {energy(m.producedMwh)}</p>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-ink-700">Where it came from</p>
             <FuelMixDonut breakdown={m.sourceBreakdown} />
           </div>
 
-          <Stat
-            label="Clean energy wasted (dispatched down)"
-            value={energy(m.wastedMwh)}
-            sub={`≈ ${num(wastedShare, 1)}% of output`}
-            tone="warn"
+          <PairedFigure
+            stacked
+            size="sm"
+            green={{
+              label: 'Clean energy wasted',
+              value: `${approx(m)}${energy(m.wastedMwh)}`,
+              gloss: `≈ ${num(wastedShare, 1)}% of all electricity generated`,
+              tags: volumeTags(m),
+            }}
+            orange={{
+              label: 'If that surplus had mined Bitcoin',
+              value: `≈ ${btcFigure(m.btcMinedNet)}`,
+              gloss: `≈ ${eur(m.btcValueEur, { compact: true })} of recoverable value`,
+              tags: btcTags(m),
+            }}
           />
-          <Stat
-            label="Paid out for that switched-off energy"
-            value={eur(m.costEur, { compact: true })}
-            sub={`compensation only — replacing it with gas cost ≈ ${eur(replacementCost, { compact: true })} more`}
-            tone="warn"
+
+          <PairedFigure
+            stacked
+            size="sm"
+            green={{
+              label: `Paid out · per ${denom}`,
+              value: `≈ ${eur(costPer)}`,
+              gloss: (
+                <>
+                  ≈ {eur(m.costEur, { compact: true })} in compensation in total — and replacing the lost power with gas
+                  costs ≈ {eur(replacementCost, { compact: true })} more.
+                </>
+              ),
+              tags: costTags(m),
+            }}
+            orange={{
+              label: `Recoverable · per ${denom}`,
+              value: `≈ ${eur(savingPer)}`,
+              gloss: `≈ ${eur(m.btcValueEur, { compact: true })} across all ${denom === 'household' ? 'households' : 'people'}`,
+              tags: btcTags(m),
+            }}
           />
-          <Stat label={`Cost per ${denom}`} value={eur(costPer)} tone="warn" />
 
-          <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
-            <p className="text-sm font-semibold text-navy-900">If that surplus had mined Bitcoin</p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Stat label="Recoverable value" value={eur(m.btcValueEur, { compact: true })} tone="good" compact />
-              <Stat label={`Saved per ${denom}`} value={eur(savingPer)} tone="good" compact />
-            </div>
-            <p className="mt-1 text-xs text-navy-600">{num(m.btcMinedNet, 1)} BTC mined (net of pool fee)</p>
-          </div>
+          {period !== headlinePeriod && (
+            <WhyDiffer>
+              The headline above is {PERIOD_TAG[headlinePeriod].toLowerCase()} ({methodTag(headline).toLowerCase()});
+              this panel shows {PERIOD_TAG[period].toLowerCase()} ({methodTag(m).toLowerCase()}).
+            </WhyDiffer>
+          )}
 
-          <NotFinancialAdvice />
+          <NotFinancialAdvice priceEur={btcPriceEur} asOf={asOf} />
         </aside>
       </div>
 
-      {/* Below the fold: two digestible charts that carry the story */}
       {mixSeries.length > 0 && (
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="card">
-            <h3 className="font-semibold text-navy-900">Where Ireland&apos;s electricity came from</h3>
+            <h3 className="text-[22px]">Where Ireland&apos;s electricity came from</h3>
+            <TagRow tags={[{ kind: 'period', label: PERIOD_TAG[period] }, { kind: 'method', label: 'Modelled' }]} className="mt-2" />
             <FuelMixChart data={mixSeries} />
             <Takeaway>
-              Clean sources supplied ≈ {num(windShare, 0)}% over this period. Whenever the wind drops, gas
-              (orange) fills the gap — and when there&apos;s too much wind, we switch it off.
+              Clean sources supplied ≈ {num(cleanShare, 0)}% over this period. When the wind drops, gas (grey) fills the
+              gap — and when there&apos;s more wind than the grid can take, some of it is switched off.
             </Takeaway>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-navy-900">The money: what waste cost vs what it could earn</h3>
+            <h3 className="text-[22px]">The money: what the waste cost, and what it could have earned</h3>
+            <TagRow
+              tags={[
+                { kind: 'period', label: PERIOD_TAG[period] },
+                { kind: 'method', label: 'Modelled' },
+                { kind: 'mined', label: '† If mined' },
+              ]}
+              className="mt-2"
+            />
             <MoneyChart data={moneySeries} />
             <Takeaway>
-              Over this period, ≈ {eur(m.costEur, { compact: true })} was paid out for energy we threw away —
-              while the same surplus could have earned ≈ {eur(m.btcValueEur, { compact: true })}.
+              Over this period ≈ {eur(m.costEur, { compact: true })} was paid out for energy that was switched off —
+              while the same surplus could have earned ≈ {eur(m.btcValueEur, { compact: true })}.†
             </Takeaway>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  sub,
-  tone = 'default',
-  compact = false,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  tone?: 'default' | 'warn' | 'good';
-  compact?: boolean;
-}) {
-  const toneClass = tone === 'warn' ? 'text-orange-700' : tone === 'good' ? 'text-emerald-700' : 'text-navy-900';
-  return (
-    <div>
-      <p className="text-sm text-navy-600">{label}</p>
-      <p className={`font-bold ${compact ? 'text-lg' : 'text-2xl'} ${toneClass}`}>{value}</p>
-      {sub && <p className="text-xs text-navy-500">{sub}</p>}
     </div>
   );
 }

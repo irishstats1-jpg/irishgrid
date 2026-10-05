@@ -9,7 +9,7 @@ export type { MapGenerator } from './IrelandMapInner';
 const IrelandMapInner = dynamic(() => import('./IrelandMapInner'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[560px] items-center justify-center rounded-xl border border-navy-100 bg-sky-50 text-sm text-navy-400">
+    <div className="flex h-[560px] items-center justify-center rounded-sm border border-ink-200 bg-white text-sm text-ink-500">
       Loading map…
     </div>
   ),

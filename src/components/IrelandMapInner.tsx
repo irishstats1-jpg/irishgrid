@@ -35,7 +35,7 @@ export default function IrelandMapInner({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-3">
           {fuelsPresent.map((f) => (
-            <span key={f} className="flex items-center gap-1.5 text-xs text-navy-700">
+            <span key={f} className="flex items-center gap-1.5 text-xs text-ink-700">
               <span className="inline-block h-3 w-3 rounded-full" style={{ background: FUEL_COLORS[f] }} />
               {FUEL_LABELS[f]}
             </span>
@@ -46,12 +46,12 @@ export default function IrelandMapInner({
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-navy-100">
+      <div className="isolate overflow-hidden rounded-sm border border-ink-200">
         <MapContainer
           center={[53.3, -8.0]}
           zoom={7}
           scrollWheelZoom={false}
-          style={{ height: 520, width: '100%', background: '#eef4fa' }}
+          style={{ height: 520, width: '100%', background: '#F2F2F3' }}
           attributionControl
         >
           <TileLayer
@@ -78,22 +78,22 @@ export default function IrelandMapInner({
                 <div className="min-w-[12rem]">
                   <div className="flex items-center gap-2">
                     <span className="inline-block h-3 w-3 rounded-full" style={{ background: FUEL_COLORS[g.fuelType] }} />
-                    <p className="font-semibold text-navy-900">{g.name}</p>
+                    <p className="font-semibold text-ink">{g.name}</p>
                   </div>
-                  <dl className="mt-1.5 space-y-0.5 text-xs text-navy-700">
+                  <dl className="mt-1.5 space-y-0.5 text-xs text-ink-700">
                     <div className="flex justify-between gap-4"><dt>Fuel</dt><dd>{FUEL_LABELS[g.fuelType]}</dd></div>
                     <div className="flex justify-between gap-4"><dt>Capacity</dt><dd>{g.capacityMw} MW</dd></div>
                     <div className="flex justify-between gap-4"><dt>Operator</dt><dd className="text-right">{g.operator}</dd></div>
                     <div className="flex justify-between gap-4"><dt>Location</dt><dd className="text-right">{g.region}</dd></div>
                     {typeof g.modelledOutputMwh === 'number' && (
                       <div className="flex justify-between gap-4">
-                        <dt>Output <span className="text-amber-700">(est.)</span></dt>
+                        <dt>Output <span className="text-ink-500">(est.)</span></dt>
                         <dd>{energy(g.modelledOutputMwh)}</dd>
                       </div>
                     )}
                     {typeof g.attributableWastedMwh === 'number' && g.attributableWastedMwh > 0 && (
                       <div className="flex justify-between gap-4">
-                        <dt>Wasted <span className="text-amber-700">(est.)</span></dt>
+                        <dt>Wasted <span className="text-ink-500">(est.)</span></dt>
                         <dd>{energy(g.attributableWastedMwh)}</dd>
                       </div>
                     )}
@@ -104,7 +104,7 @@ export default function IrelandMapInner({
           ))}
         </MapContainer>
       </div>
-      <p className="mt-2 text-xs text-navy-400">
+      <p className="mt-2 text-xs text-ink-500">
         EirGrid publishes live fuel mix at system level, not per plant. Per-plant output shown here is an
         estimate. Coordinates/capacities are a curated seed set (EirGrid connected-generators list + OSM).
       </p>

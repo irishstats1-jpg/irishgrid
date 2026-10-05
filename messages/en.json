@@ -1,8 +1,9 @@
 {
   "brand": {
     "name": "Irish Grid",
-    "tagline": "More renewables. Lower bills. A grid that wastes nothing.",
-    "independence": "Independent · not affiliated with EirGrid or SONI"
+    "tagline": "Waste less. Pay less. Build more clean energy.",
+    "independence": "Independent. No connection to EirGrid or SONI.",
+    "wordmark": "IRISH GRID"
   },
   "nav": {
     "home": "The Problem",
@@ -18,8 +19,8 @@
     "bitcoin": "The Bitcoin Network"
   },
   "common": {
-    "estimate": "Modelled estimate",
-    "actual": "Official annual actual",
+    "estimate": "Modelled",
+    "actual": "Reported",
     "notFinancialAdvice": "Not financial or investment advice.",
     "perBillpayer": "per billpayer",
     "perPerson": "per person",
@@ -38,14 +39,15 @@
     "2022": "2022"
   },
   "footer": {
-    "independenceTitle": "Independence",
-    "independenceBody": "Irish Grid is an independent project. It is not affiliated with, endorsed by, or connected to EirGrid, SONI, or any system operator.",
-    "financialTitle": "Financial disclaimer",
-    "financialBody": "Bitcoin figures depend on volatile market prices and are illustrative. Nothing on this site is financial or investment advice.",
-    "estimatesTitle": "About the figures",
-    "estimatesBody": "Short-period curtailment and cost figures are modelled estimates. Annual figures use official EirGrid Constraint & Curtailment reports.",
+    "independenceTitle": "Independent",
+    "independenceBody": "Irish Grid is an independent site. It has no connection to EirGrid or SONI.",
+    "financialTitle": "† Bitcoin figures",
+    "financialBody": "Illustrative estimate at the BTC price and network difficulty on the date shown. Not financial advice.",
+    "estimatesTitle": "No number without its basis",
+    "estimatesBody": "Every figure carries its period and source. Annual volumes are reported in EirGrid's Constraint & Curtailment reports; short periods and all costs are modelled (≈).",
     "sourcesTitle": "Data sources",
     "contactTitle": "Contact",
-    "rights": "© {year} Irish Grid. Built on public data."
+    "rights": "© {year} Irish Grid. Built on public data.",
+    "independenceLine": "Independent. No connection to EirGrid or SONI."
   }
 }

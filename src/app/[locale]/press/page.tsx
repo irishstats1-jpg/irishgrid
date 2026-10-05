@@ -43,8 +43,8 @@ export default async function PressPage({ params }: { params: Promise<{ locale: 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {figures.map((f) => (
             <div key={f.label} className="card">
-              <p className="text-2xl font-bold text-navy-900">{f.value}</p>
-              <p className="mt-1 text-sm text-navy-600">{f.label}</p>
+              <p className="text-2xl font-semibold text-ink">{f.value}</p>
+              <p className="mt-1 text-sm text-ink-600">{f.label}</p>
             </div>
           ))}
         </div>
@@ -55,14 +55,14 @@ export default async function PressPage({ params }: { params: Promise<{ locale: 
           {assets.map((a) => (
             <a key={a.title} href={a.href} target="_blank" rel="noopener noreferrer" className="card flex items-center justify-between transition hover:shadow-md">
               <div>
-                <p className="font-semibold text-navy-900">{a.title}</p>
-                <p className="text-sm text-navy-600">{a.note}</p>
+                <p className="font-semibold text-ink">{a.title}</p>
+                <p className="text-sm text-ink-600">{a.note}</p>
               </div>
-              <span className="text-sky-600">↓</span>
+              <span className="text-green-700">↓</span>
             </a>
           ))}
         </div>
-        <p className="prose-body mt-3 text-sm text-navy-500">Additional assets are managed in the admin media library.</p>
+        <p className="prose-body mt-3 text-sm text-ink-500">Additional assets are managed in the admin media library.</p>
       </Section>
 
       <Section title="Embeddable widgets">
@@ -76,8 +76,8 @@ export default async function PressPage({ params }: { params: Promise<{ locale: 
             { name: 'Savings calculator', path: 'calculator', w: 660, h: 380 },
           ].map((wgt) => (
             <div key={wgt.path} className="card">
-              <p className="font-semibold text-navy-900">{wgt.name}</p>
-              <pre className="mt-2 overflow-x-auto rounded-lg bg-navy-800 p-3 text-[11px] leading-relaxed text-navy-50">{`<iframe
+              <p className="font-semibold text-ink">{wgt.name}</p>
+              <pre className="mt-2 overflow-x-auto rounded-sm bg-peat-light p-3 text-[11px] leading-relaxed text-white/90">{`<iframe
   src="https://irishgrid.com/widget/${wgt.path}"
   width="${wgt.w}" height="${wgt.h}"
   style="border:0" loading="lazy"
@@ -96,7 +96,7 @@ export default async function PressPage({ params }: { params: Promise<{ locale: 
             energy — could turn that waste into value. Irish Grid is not affiliated with EirGrid or SONI. All
             figures are built on public data with a fully published methodology.
           </p>
-          <p className="prose-body mt-3 text-sm text-navy-500">Media contact: press@irishgrid.com</p>
+          <p className="prose-body mt-3 text-sm text-ink-500">Media contact: press@irishgrid.com</p>
         </div>
       </Section>
     </>

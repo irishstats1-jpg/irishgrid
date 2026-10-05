@@ -42,9 +42,9 @@ const SOURCES = [
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex justify-between gap-4 border-b border-navy-100 py-1.5 text-sm">
-      <dt className="text-navy-600">{k}</dt>
-      <dd className="font-medium text-navy-900">{v}</dd>
+    <div className="flex justify-between gap-4 border-b border-ink-200 py-1.5 text-sm">
+      <dt className="text-ink-600">{k}</dt>
+      <dd className="font-medium text-ink">{v}</dd>
     </div>
   );
 }
@@ -72,7 +72,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <Section title="1 · Wasted energy (dispatch-down)">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="card">
-            <h3 className="font-semibold text-navy-900">Year views — official actuals</h3>
+            <h3 className="font-semibold text-ink">Year views — official actuals</h3>
             <p className="prose-body mt-2">
               For full-year figures we use the <strong>official annual dispatch-down volumes</strong> from
               EirGrid&apos;s Constraint &amp; Curtailment reports (split into curtailment vs constraint where
@@ -80,10 +80,10 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             </p>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-navy-900">Short periods — modelled estimates</h3>
+            <h3 className="font-semibold text-ink">Short periods — modelled estimates</h3>
             <p className="prose-body mt-2">
               For day/week/month views we estimate dispatch-down from live data as{' '}
-              <code className="rounded bg-navy-50 px-1">available_wind − dispatched_wind</code> for the period.
+              <code className="rounded bg-paper px-1">available_wind − dispatched_wind</code> for the period.
               These are labelled <span className="badge-estimate">≈ estimate</span> and are not official actuals.
             </p>
           </div>
@@ -99,7 +99,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           from the compensated <em>cost</em>.
         </p>
         <div className="mt-4 card max-w-2xl">
-          <h3 className="mb-2 font-semibold text-navy-900">Worked example — 1,000 GWh dispatched down</h3>
+          <h3 className="mb-2 font-semibold text-ink">Worked example — 1,000 GWh dispatched down</h3>
           <dl>
             <Row k="Curtailment volume" v={energy(700_000)} />
             <Row k="Constraint volume" v={energy(300_000)} />
@@ -118,8 +118,8 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         </p>
         <div className="mt-4 grid gap-6 lg:grid-cols-2">
           <div className="card">
-            <h3 className="mb-2 font-semibold text-navy-900">Formula</h3>
-            <pre className="overflow-x-auto rounded-lg bg-navy-800 p-4 text-xs leading-relaxed text-navy-50">
+            <h3 className="mb-2 font-semibold text-ink">Formula</h3>
+            <pre className="overflow-x-auto rounded-sm bg-peat-light p-4 text-xs leading-relaxed text-white/90">
 {`usable_MWh   = wasted_MWh × uptime
 total_TH     = (usable_MWh × 1000 × 3.6e6 J) / efficiency_J_per_TH
 fleet_TH/s   = total_TH / period_seconds
@@ -131,7 +131,7 @@ saving/head  = value_eur / n_billpayers`}
             </pre>
           </div>
           <div className="card">
-            <h3 className="mb-2 font-semibold text-navy-900">Worked example — 1,000 GWh / year</h3>
+            <h3 className="mb-2 font-semibold text-ink">Worked example — 1,000 GWh / year</h3>
             <dl>
               <Row k="Usable energy (× uptime)" v={energy(exBtc.usableEnergyMwh)} />
               <Row k="Avg fleet hashrate" v={`${num(exBtc.fleetHashrateThs / 1e6, 2)} EH/s`} />
@@ -174,11 +174,11 @@ saving/head  = value_eur / n_billpayers`}
 
       <Section title="Data sources">
         <div className="card">
-          <ul className="divide-y divide-navy-100">
+          <ul className="divide-y divide-ink-200">
             {SOURCES.map(([name, use, href]) => (
               <li key={name} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-                <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-600 hover:underline">{name}</a>
-                <span className="text-sm text-navy-600">{use}</span>
+                <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-green-700 hover:underline">{name}</a>
+                <span className="text-sm text-ink-600">{use}</span>
               </li>
             ))}
           </ul>

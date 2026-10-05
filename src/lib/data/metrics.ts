@@ -19,9 +19,20 @@ import { fetchBtcMarket } from './live';
 
 const FUELS: FuelType[] = ['wind', 'solar', 'gas', 'hydro', 'coal', 'oil', 'other', 'imports'];
 
+/**
+ * How a period's headline volume was obtained (Brand Book §07, method tags):
+ * reported in an EirGrid Constraint & Curtailment report; provisional (a year
+ * whose official report isn't out yet, extrapolated from the trend); or
+ * modelled from the daily series.
+ */
+export type FigureMethod = 'reported' | 'provisional' | 'modelled';
+
 export interface PeriodMetrics {
   periodKey: PeriodKey;
   isEstimate: boolean;
+  method: FigureMethod;
+  /** Short human source for the basis tag, e.g. "EirGrid C&C report 2024". */
+  source: string;
   producedMwh: number;
   wastedMwh: number;
   curtailmentMwh?: number;
@@ -154,9 +165,12 @@ export function computePeriodMetrics(periodKey: PeriodKey): PeriodMetrics {
     );
     const btc = computeBtcSavings(wastedMwh, periodHours, assumptions, market);
 
+    const reported = !!actual && !/^provisional/i.test(actual.source);
     return {
       periodKey,
-      isEstimate: false,
+      isEstimate: !reported,
+      method: reported ? 'reported' : 'provisional',
+      source: reported ? `EirGrid C&C report ${year}` : `Extrapolated from the ${year - 3}–${year - 1} trend`,
       producedMwh: producedGwh * 1000,
       wastedMwh,
       curtailmentMwh,
@@ -194,6 +208,8 @@ export function computePeriodMetrics(periodKey: PeriodKey): PeriodMetrics {
   return {
     periodKey,
     isEstimate: true,
+    method: 'modelled',
+    source: 'Modelled daily series',
     producedMwh,
     wastedMwh,
     sourceBreakdown: breakdown,

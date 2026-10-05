@@ -13,7 +13,7 @@ export function CurtailmentOutlookChart({
     <TrendChart
       data={data}
       dataKey="curtailment"
-      color="#e06d3b"
+      color="#169B62"
       yFormat={(v) => `${(v / 1000).toFixed(1)} TWh`}
     />
   );

@@ -21,18 +21,18 @@ const NAV = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="font-sans">
-      <body className="min-h-screen bg-navy-50">
+      <body className="min-h-screen bg-paper">
         <div className="flex min-h-screen">
-          <aside className="w-56 shrink-0 bg-navy-700 p-4 text-white">
-            <p className="mb-4 font-bold">Irish Grid <span className="text-sky-400">admin</span></p>
+          <aside className="w-56 shrink-0 bg-peat p-4 text-white">
+            <p className="mb-4 font-semibold">Irish Grid <span className="text-green-300">admin</span></p>
             <nav className="space-y-1 text-sm">
               {NAV.map(([href, label]) => (
-                <Link key={href} href={href} className="block rounded px-3 py-2 text-navy-50 hover:bg-navy-600">
+                <Link key={href} href={href} className="block rounded px-3 py-2 text-white/90 hover:bg-peat-light">
                   {label}
                 </Link>
               ))}
             </nav>
-            <Link href="/" className="mt-6 block text-xs text-sky-400 hover:underline">← Back to site</Link>
+            <Link href="/" className="mt-6 block text-xs text-green-300 hover:underline">← Back to site</Link>
           </aside>
           <main className="flex-1 p-8">{children}</main>
         </div>

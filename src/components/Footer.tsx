@@ -17,24 +17,14 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-16 bg-navy-700 text-navy-50">
+    <footer className="mt-16 bg-peat text-white/90">
       <div className="container-page py-12">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Blue info boxes (§13) */}
-          <div className="rounded-xl bg-navy-800 p-5">
-            <h3 className="mb-2 text-sm font-semibold text-sky-400">{t('independenceTitle')}</h3>
-            <p className="text-sm leading-relaxed">{t('independenceBody')}</p>
-          </div>
-          <div className="rounded-xl bg-navy-800 p-5">
-            <h3 className="mb-2 text-sm font-semibold text-sky-400">{t('financialTitle')}</h3>
-            <p className="text-sm leading-relaxed">{t('financialBody')}</p>
-          </div>
-          <div className="rounded-xl bg-navy-800 p-5">
-            <h3 className="mb-2 text-sm font-semibold text-sky-400">{t('estimatesTitle')}</h3>
-            <p className="text-sm leading-relaxed">{t('estimatesBody')}</p>
-          </div>
-          <div className="rounded-xl bg-navy-800 p-5">
-            <h3 className="mb-2 text-sm font-semibold text-sky-400">{t('sourcesTitle')}</h3>
+        <div className="grid gap-px overflow-hidden rounded-sm border border-white/15 bg-white/15 md:grid-cols-2 lg:grid-cols-4">
+          <FooterBox title={t('independenceTitle')} body={t('independenceBody')} />
+          <FooterBox title={t('financialTitle')} body={t('financialBody')} orange />
+          <FooterBox title={t('estimatesTitle')} body={t('estimatesBody')} />
+          <div className="bg-peat p-5">
+            <h3 className="eyebrow mb-2 !text-green-300">{t('sourcesTitle')}</h3>
             <ul className="space-y-1 text-sm">
               {SOURCES.map((s) => (
                 <li key={s.href}>
@@ -47,14 +37,10 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-6 border-t border-navy-600 pt-8 md:flex-row md:items-center md:justify-between">
-          <div>
-            <Wordmark className="h-7 w-auto text-white" />
-            <p className="mt-2 max-w-md text-xs text-navy-100">
-              An independent advocacy project built on public data. Not affiliated with EirGrid or SONI.
-            </p>
-          </div>
+        <div className="mt-10 flex flex-col gap-6 border-t border-white/15 pt-8 md:flex-row md:items-center md:justify-between">
+          <Wordmark tone="dark" markClassName="h-7 w-7" />
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="Footer">
+            <Link href="/" className="hover:text-white">{tn('home')}</Link>
             <Link href="/bitcoin" className="hover:text-white">{tn('bitcoin')}</Link>
             <Link href="/proposal" className="hover:text-white">{tn('proposal')}</Link>
             <Link href="/get-involved" className="hover:text-white">{tn('getInvolved')}</Link>
@@ -67,8 +53,20 @@ export function Footer() {
           </nav>
         </div>
 
-        <p className="mt-8 text-xs text-navy-100">{t('rights', { year })}</p>
+        <div className="mt-8 flex flex-col gap-2 text-xs text-white/75 md:flex-row md:justify-between">
+          <p>{t('independenceLine')}</p>
+          <p>{t('rights', { year })}</p>
+        </div>
       </div>
     </footer>
+  );
+}
+
+function FooterBox({ title, body, orange = false }: { title: string; body: string; orange?: boolean }) {
+  return (
+    <div className="bg-peat p-5">
+      <h3 className={`eyebrow mb-2 ${orange ? '!text-orange-400' : '!text-green-300'}`}>{title}</h3>
+      <p className="text-sm leading-relaxed">{body}</p>
+    </div>
   );
 }

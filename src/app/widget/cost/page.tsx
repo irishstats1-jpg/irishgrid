@@ -9,13 +9,13 @@ export default async function CostWidget() {
   await refreshLiveData();
   const m = computePeriodMetrics('last_365');
   return (
-    <div className="rounded-xl bg-navy-700 p-5 text-white" style={{ maxWidth: 360 }}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">Irish Grid · last 365 days</p>
-      <p className="mt-2 text-3xl font-bold">{energy(m.wastedMwh)}</p>
-      <p className="text-sm text-navy-50">clean energy wasted</p>
-      <p className="mt-3 text-2xl font-bold text-orange-300">{eur(m.costEur, { compact: true })}</p>
-      <p className="text-sm text-navy-50">cost to billpayers</p>
-      <a href="https://irishgrid.com" target="_blank" rel="noopener noreferrer" className="mt-3 block text-xs text-sky-400 hover:underline">
+    <div className="rounded-sm bg-peat p-5 text-white" style={{ maxWidth: 360 }}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-green-300">Irish Grid · last 365 days</p>
+      <p className="mt-2 text-3xl font-semibold">{energy(m.wastedMwh)}</p>
+      <p className="text-sm text-white/90">clean energy wasted</p>
+      <p className="mt-3 text-2xl font-semibold text-green-300">{eur(m.costEur, { compact: true })}</p>
+      <p className="text-sm text-white/90">cost to billpayers</p>
+      <a href="https://irishgrid.com" target="_blank" rel="noopener noreferrer" className="mt-3 block text-xs text-green-300 hover:underline">
         irishgrid.com — modelled · not financial advice
       </a>
     </div>

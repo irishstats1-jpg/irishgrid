@@ -6,6 +6,13 @@ import { locales, type Locale } from '@/i18n/config';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Analytics } from '@/components/Analytics';
+// Barlow Condensed over Barlow (Brand Book §05) — self-hosted, so pages make no
+// third-party font requests and render the same everywhere.
+import '@fontsource/barlow/latin-400.css';
+import '@fontsource/barlow/latin-500.css';
+import '@fontsource/barlow/latin-600.css';
+import '@fontsource/barlow-condensed/latin-500.css';
+import '@fontsource/barlow-condensed/latin-600.css';
 import '../globals.css';
 
 export function generateStaticParams() {
@@ -15,7 +22,7 @@ export function generateStaticParams() {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://irishgrid.com'),
   title: {
-    default: "Irish Grid — What's powering Ireland, and what we waste",
+    default: 'Irish Grid — Waste less. Pay less. Build more clean energy.',
     template: '%s · Irish Grid',
   },
   description:
@@ -54,7 +61,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages} locale={locale}>
           <a
             href="#main"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-navy-700 focus:px-4 focus:py-2 focus:text-white"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-peat focus:px-4 focus:py-2 focus:text-white"
           >
             Skip to content
           </a>

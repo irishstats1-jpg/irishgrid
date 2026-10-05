@@ -79,12 +79,12 @@ export function GetInvolvedForms() {
               setActive(p.key);
               setStatus('idle');
             }}
-            className={`w-full rounded-lg border p-3 text-left transition ${
-              active === p.key ? 'border-sky-500 bg-sky-50' : 'border-navy-100 hover:bg-navy-50'
+            className={`w-full rounded-sm border p-3 text-left transition ${
+              active === p.key ? 'border-green-500 bg-green-100' : 'border-ink-200 hover:bg-ink-100'
             }`}
           >
-            <p className="font-semibold text-navy-900">{p.title}</p>
-            <p className="text-xs text-navy-600">{p.blurb}</p>
+            <p className="font-semibold text-ink">{p.title}</p>
+            <p className="text-xs text-ink-600">{p.blurb}</p>
           </button>
         ))}
       </nav>
@@ -93,7 +93,7 @@ export function GetInvolvedForms() {
         {status === 'done' ? (
           <div className="py-8 text-center">
             <p className="text-2xl">✅</p>
-            <h3 className="mt-2 text-lg font-bold text-navy-900">Thank you</h3>
+            <h3 className="mt-2 text-lg font-semibold text-ink">Thank you</h3>
             <p className="prose-body mt-1">
               We&apos;ve received your submission and sent a confirmation. We&apos;ll be in touch.
             </p>
@@ -103,28 +103,28 @@ export function GetInvolvedForms() {
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
-            <h3 className="text-lg font-bold text-navy-900">{PATHWAYS.find((p) => p.key === active)!.title}</h3>
+            <h3 className="text-lg font-semibold text-ink">{PATHWAYS.find((p) => p.key === active)!.title}</h3>
             {active === 'investor' && (
-              <p className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-navy-800">
+              <p className="rounded-sm border border-green-200 bg-green-100 p-3 text-sm text-ink-800">
                 On submission we&apos;ll email you access to the investor data room and deck.
               </p>
             )}
             {FIELDS[active].map((f) => (
               <div key={f.name}>
-                <label htmlFor={f.name} className="mb-1 block text-sm font-medium text-navy-800">
-                  {f.label} {f.required && <span className="text-orange-600">*</span>}
+                <label htmlFor={f.name} className="mb-1 block text-sm font-medium text-ink-800">
+                  {f.label} {f.required && <span className="text-green-700">*</span>}
                 </label>
                 {f.textarea ? (
-                  <textarea id={f.name} name={f.name} rows={4} required={f.required} className="w-full rounded-lg border border-navy-200 p-2.5 text-sm" />
+                  <textarea id={f.name} name={f.name} rows={4} required={f.required} className="w-full rounded-sm border border-ink-200 p-2.5 text-sm" />
                 ) : (
-                  <input id={f.name} name={f.name} type={f.type ?? 'text'} required={f.required} className="w-full rounded-lg border border-navy-200 p-2.5 text-sm" />
+                  <input id={f.name} name={f.name} type={f.type ?? 'text'} required={f.required} className="w-full rounded-sm border border-ink-200 p-2.5 text-sm" />
                 )}
               </div>
             ))}
-            <p className="text-xs text-navy-500">
+            <p className="text-xs text-ink-500">
               We store only what you submit, to respond to your enquiry. See our privacy note in the footer.
             </p>
-            {status === 'error' && <p className="text-sm text-orange-700">{error}</p>}
+            {status === 'error' && <p className="border-l-2 border-ink pl-2 text-sm font-medium text-ink">{error}</p>}
             <button type="submit" className="btn-primary" disabled={status === 'submitting'}>
               {status === 'submitting' ? 'Sending…' : 'Submit'}
             </button>

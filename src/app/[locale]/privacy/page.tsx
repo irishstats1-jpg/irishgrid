@@ -28,7 +28,7 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
             We do not sell your data or share it with third parties for marketing. You can ask us to access or
             delete your data at any time by emailing <strong>privacy@irishgrid.com</strong>.
           </p>
-          <p className="text-sm text-navy-500">
+          <p className="text-sm text-ink-500">
             Irish Grid is an independent project and is not affiliated with EirGrid or SONI.
           </p>
         </div>

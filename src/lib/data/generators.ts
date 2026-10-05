@@ -69,13 +69,15 @@ export const FUEL_LABELS: Record<FuelType, string> = {
   imports: 'Imports',
 };
 
+// Brand Book §04: renewables in Grid Green tints (told apart by lightness);
+// fossil generation and imports in neutral greys — never red, never orange.
 export const FUEL_COLORS: Record<FuelType, string> = {
-  wind: '#2b9fd6',
-  solar: '#f2b705',
-  gas: '#e06d3b',
-  hydro: '#3bb2a0',
-  coal: '#4a4a4a',
-  oil: '#8a5a44',
-  other: '#8a8f98',
-  imports: '#7d6bb0',
+  wind: '#169B62', // green 500
+  solar: '#91D6B1', // green 300
+  hydro: '#0A4A2F', // green 800
+  gas: '#6B6F73', // ink 500
+  coal: '#2A2C2E', // ink 800
+  oil: '#4F5357', // ink 600
+  other: '#B5B8BB', // ink 300
+  imports: '#8E9296', // ink 400
 };

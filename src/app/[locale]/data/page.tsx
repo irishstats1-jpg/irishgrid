@@ -48,7 +48,7 @@ export default async function DataPage({ params }: { params: Promise<{ locale: s
           <>
             Everything on Irish Grid is built on public data. Download the underlying series as CSV. Short-period
             figures are modelled estimates; annual figures use official actuals — see the{' '}
-            <Link href="/about" className="font-medium text-sky-600 underline">Methodology</Link>.
+            <Link href="/about" className="font-medium text-green-700 underline">Methodology</Link>.
           </>
         }
       />
@@ -56,10 +56,10 @@ export default async function DataPage({ params }: { params: Promise<{ locale: s
         <div className="grid gap-6 md:grid-cols-2">
           {DATASETS.map((d) => (
             <div key={d.slug} className="card">
-              <h3 className="font-semibold text-navy-900">{d.title}</h3>
+              <h3 className="font-semibold text-ink">{d.title}</h3>
               <p className="prose-body mt-1">{d.desc}</p>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-navy-500">Columns</p>
-              <p className="mt-1 font-mono text-xs text-navy-700">{d.dict.join(' · ')}</p>
+              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-ink-500">Columns</p>
+              <p className="mt-1 font-mono text-xs text-ink-700">{d.dict.join(' · ')}</p>
               <a href={`/api/data/${d.slug}`} className="btn-primary mt-4" download>
                 Download CSV
               </a>

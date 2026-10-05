@@ -2,54 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
-}
-
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-white text-navy-900 antialiased;
+  @apply bg-paper font-sans text-ink antialiased;
 }
 
-/* Accessible focus states (WCAG 2.1 AA, §13). */
+/* Barlow Condensed over Barlow (Brand Book §05). */
+h1,
+h2,
+h3,
+h4 {
+  @apply font-display font-semibold text-ink;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Accessible focus states (WCAG 2.1 AA). */
 a:focus-visible,
 button:focus-visible,
 [role='button']:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  @apply outline-none ring-2 ring-sky-500 ring-offset-2 ring-offset-white;
+  @apply outline-none ring-2 ring-green-500 ring-offset-2 ring-offset-paper;
 }
 
 @layer components {
   .container-page {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
+  /* Display · 72/0.95 · Condensed 600 caps — scaled down on small screens. */
+  .display {
+    @apply font-display font-semibold uppercase leading-[0.95] tracking-tight;
+  }
+  /* Figure · Condensed 600, tight leading, in the 700 step of its colour. */
+  .figure {
+    @apply font-display font-semibold leading-[0.9] tabular-nums;
+  }
+  /* Label · 13 · Condensed 500 caps +12% tracking. */
+  .eyebrow {
+    @apply font-display text-[13px] font-medium uppercase tracking-[0.12em] text-ink-600;
+  }
   .card {
-    @apply rounded-xl border border-navy-100 bg-white p-5 shadow-sm;
+    @apply rounded-sm border border-ink-200 bg-white p-5;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg bg-navy-700 px-5 py-2.5 font-medium text-white transition hover:bg-navy-600;
+    @apply inline-flex items-center justify-center rounded-sm bg-peat px-5 py-2.5 font-display text-[17px] font-semibold uppercase tracking-[0.04em] text-white transition hover:bg-peat-light;
   }
+  /* Block Orange is the primary call to action — it leads to the fix. */
   .btn-accent {
-    @apply inline-flex items-center justify-center rounded-lg bg-sky-500 px-5 py-2.5 font-medium text-white transition hover:bg-sky-600;
+    @apply inline-flex items-center justify-center rounded-sm bg-orange-500 px-5 py-2.5 font-display text-[17px] font-semibold uppercase tracking-[0.04em] text-ink transition hover:bg-orange-400;
   }
   .btn-outline {
-    @apply inline-flex items-center justify-center rounded-lg border border-navy-200 px-5 py-2.5 font-medium text-navy-700 transition hover:bg-navy-50;
-  }
-  .badge-estimate {
-    @apply inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800;
-  }
-  .badge-actual {
-    @apply inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800;
-  }
-  .eyebrow {
-    @apply text-sm font-semibold uppercase tracking-wide text-sky-600;
+    @apply inline-flex items-center justify-center rounded-sm border border-ink-300 px-5 py-2.5 font-display text-[17px] font-semibold uppercase tracking-[0.04em] text-ink transition hover:bg-ink-100;
   }
   .prose-body {
-    @apply text-[15px] leading-relaxed text-navy-800;
+    @apply text-[17px] leading-[1.55] text-ink-800;
+  }
+  .link {
+    @apply font-medium text-green-700 underline decoration-green-500/50 underline-offset-2 hover:decoration-green-700;
   }
 }

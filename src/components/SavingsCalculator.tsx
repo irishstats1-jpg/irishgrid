@@ -32,16 +32,16 @@ export function SavingsCalculator({ compact = false }: { compact?: boolean }) {
     fmt: (v: number) => string,
   ) => (
     <label className="block">
-      <span className="flex justify-between text-sm font-medium text-navy-800">
+      <span className="flex justify-between text-sm font-medium text-ink-800">
         <span>{label}</span>
-        <span className="text-sky-600">{fmt(value)}</span>
+        <span className="text-green-700">{fmt(value)}</span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-1 w-full accent-sky-500" />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-1 w-full accent-green-600" />
     </label>
   );
 
   return (
-    <div className={`rounded-xl border border-navy-100 bg-white p-5 ${compact ? '' : 'shadow-sm'}`}>
+    <div className={`rounded-sm border border-ink-200 bg-white p-5 ${compact ? '' : 'shadow-sm'}`}>
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-4">
           {field('Wasted energy / year', wastedGwh, 100, 6000, 50, setWastedGwh, (v) => energy(v * 1000))}
@@ -49,15 +49,15 @@ export function SavingsCalculator({ compact = false }: { compact?: boolean }) {
           {field('Uptime factor', uptime, 0.5, 1, 0.01, setUptime, (v) => pct(v * 100, 0))}
           {field('BTC price', btcPrice, 20000, 250000, 1000, setBtcPrice, (v) => eur(v, { compact: true }))}
         </div>
-        <div className="rounded-lg bg-navy-700 p-5 text-white">
-          <p className="text-xs uppercase tracking-wide text-sky-400">Recoverable value</p>
-          <p className="mt-1 text-3xl font-bold">{eur(r.valueEur, { compact: true })}</p>
+        <div className="rounded-sm bg-peat p-5 text-white">
+          <p className="text-xs uppercase tracking-wide text-green-300">Recoverable value</p>
+          <p className="mt-1 text-3xl font-semibold">{eur(r.valueEur, { compact: true })}</p>
           <dl className="mt-4 space-y-1.5 text-sm">
-            <div className="flex justify-between"><dt className="text-navy-100">BTC mined (net)</dt><dd>{btc(r.btcMinedNet)}</dd></div>
-            <div className="flex justify-between"><dt className="text-navy-100">Network share</dt><dd>{pct(r.networkSharePct, 2)}</dd></div>
-            <div className="flex justify-between"><dt className="text-navy-100">Saved / billpayer</dt><dd>{eur(r.savingPerBillpayerEur)}</dd></div>
+            <div className="flex justify-between"><dt className="text-white/75">BTC mined (net)</dt><dd>{btc(r.btcMinedNet)}</dd></div>
+            <div className="flex justify-between"><dt className="text-white/75">Network share</dt><dd>{pct(r.networkSharePct, 2)}</dd></div>
+            <div className="flex justify-between"><dt className="text-white/75">Saved / billpayer</dt><dd>{eur(r.savingPerBillpayerEur)}</dd></div>
           </dl>
-          <p className="mt-4 text-[11px] text-navy-200">Illustrative · not financial advice</p>
+          <p className="mt-4 text-[11px] text-white/70">Illustrative · not financial advice</p>
         </div>
       </div>
     </div>

@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { PageHeader, Section, Callout, NotFinancialAdvice } from '@/components/ui';
+import { PageHeader, Section, Callout, NotFinancialAdvice, PairedFigure } from '@/components/ui';
 import { ForecastExplorer } from '@/components/ForecastExplorer';
 import { DEFAULT_ASSUMPTIONS } from '@/lib/methodology';
+import { computePeriodMetrics, getBtcMarket, refreshLiveData } from '@/lib/data/metrics';
+import { asOfDate, btcTags, costTags } from '@/lib/basis';
+import { eur } from '@/lib/format';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'The proposal — flexible Bitcoin mining as interruptible grid load',
@@ -33,10 +38,15 @@ const OBJECTIONS = [
 export default async function ProposalPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  await refreshLiveData();
+  const y = computePeriodMetrics('2025');
+  const market = getBtcMarket();
+  const n = DEFAULT_ASSUMPTIONS.nHouseholds;
   return (
     <>
       <PageHeader
-        eyebrow="Step 3 · The solution (a clearly-labelled proposal)"
+        eyebrow="Step 03 · An Réiteach · The solution — a clearly-labelled proposal"
+        step={3}
         title="Put the tool to work on the problem"
         intro={
           <>
@@ -59,21 +69,21 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
         </p>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <div className="card">
-            <h3 className="font-semibold text-navy-900">For households</h3>
+            <h3 className="font-semibold text-ink">For households</h3>
             <p className="prose-body mt-2 text-sm">
               Revenue from rescued energy can offset the curtailment and constraint payments that currently
               sit on every bill — putting downward pressure on what you pay.
             </p>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-navy-900">For the climate</h3>
+            <h3 className="font-semibold text-ink">For the climate</h3>
             <p className="prose-body mt-2 text-sm">
               Better project economics means more wind and solar actually get built, and none of this load
               runs on gas — so it never adds fossil demand. It helps the transition, not hinders it.
             </p>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-navy-900">For the taxpayer</h3>
+            <h3 className="font-semibold text-ink">For the taxpayer</h3>
             <p className="prose-body mt-2 text-sm">
               It is private capital, not public subsidy. It strengthens domestic energy independence and
               competes with no home or business for power — it only ever buys the surplus.
@@ -82,11 +92,31 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
         </div>
       </Section>
 
+      <Section title="The fix in one frame">
+        <PairedFigure
+          green={{
+            label: 'Paid out for switched-off energy · per household',
+            value: `≈ ${eur(y.costEur / n)}`,
+            gloss: `≈ ${eur(y.costEur, { compact: true })} in compensation across Irish homes`,
+            tags: costTags(y),
+          }}
+          orange={{
+            label: 'Recoverable if that surplus were mined · per household',
+            value: `≈ ${eur(y.btcValueEur / n)}`,
+            gloss: `≈ ${eur(y.btcValueEur, { compact: true })} of value from energy already being thrown away`,
+            tags: btcTags(y),
+          }}
+        />
+        <div className="mt-4">
+          <NotFinancialAdvice priceEur={market.priceEur} asOf={asOfDate(y.computedAt)} />
+        </div>
+      </Section>
+
       <Section title="The headline proposal">
         <div className="grid gap-6 md:grid-cols-3">
           <div className="card">
-            <p className="text-3xl font-bold text-sky-600">50 / 50</p>
-            <p className="mt-1 font-semibold text-navy-900">Sell half, hold half</p>
+            <p className="figure text-[44px] text-orange-700">50 / 50</p>
+            <p className="mt-2 font-display text-[20px] font-semibold text-ink">Sell half, hold half</p>
             <p className="prose-body mt-2">
               Sell {Math.round(DEFAULT_ASSUMPTIONS.sellShareMonthly * 100)}% of mined BTC monthly to fund
               operations and return value / offset billpayer cost; hold the remaining
@@ -94,16 +124,16 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
             </p>
           </div>
           <div className="card">
-            <p className="text-3xl font-bold text-sky-600">⚡</p>
-            <p className="mt-1 font-semibold text-navy-900">Interruptible by design</p>
+            <FeatureIcon d="M12 3v8 M6.3 6.3a8 8 0 1 0 11.4 0" />
+            <p className="mt-2 font-display text-[20px] font-semibold text-ink">Interruptible by design</p>
             <p className="prose-body mt-2">
               Rapid, automatic switch-on/off tied to grid signals. The load drops within seconds when the
               grid needs power, so it never competes with homes or industry.
             </p>
           </div>
           <div className="card">
-            <p className="text-3xl font-bold text-sky-600">📦</p>
-            <p className="mt-1 font-semibold text-navy-900">Mobile & modular</p>
+            <FeatureIcon d="M3.5 8 12 3.5 20.5 8v8L12 20.5 3.5 16Z M3.5 8 12 12.5 20.5 8 M12 12.5v8" />
+            <p className="mt-2 font-display text-[20px] font-semibold text-ink">Mobile & modular</p>
             <p className="prose-body mt-2">
               Container-scale units sited close to energy sources, deployable where curtailment is highest
               and relocatable as the grid evolves.
@@ -131,12 +161,12 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {OBJECTIONS.map((o) => (
             <div key={o.q} className="card">
-              <h3 className="font-semibold text-navy-900">{o.q}</h3>
+              <h3 className="font-semibold text-ink">{o.q}</h3>
               <p className="prose-body mt-2">{o.a}</p>
             </div>
           ))}
         </div>
-        <div className="mt-6"><NotFinancialAdvice /></div>
+        <div className="mt-6"><NotFinancialAdvice priceEur={market.priceEur} asOf={asOfDate(y.computedAt)} /></div>
       </Section>
 
       {/* Merged from the 20-year outlook: what the solution is worth over time */}
@@ -157,18 +187,26 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
       </Section>
 
       <Section>
-        <div className="rounded-2xl bg-navy-700 p-8 text-center text-white">
-          <h2 className="text-2xl font-bold">Want to help make this happen?</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-navy-50">
+        <div className="rounded-sm bg-peat p-8 text-center text-white">
+          <h2 className="text-2xl font-semibold">Want to help make this happen?</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-white/90">
             Whether you&apos;re a policymaker, an investor, a renewable operator with curtailment, or a
             supporter — there&apos;s a way to get involved.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/get-involved" className="btn-accent">Get involved</Link>
-            <Link href="/pledge" className="btn-outline !border-white !text-white hover:!bg-navy-600">Sign the pledge</Link>
+            <Link href="/get-involved" className="btn-primary !bg-white !text-peat hover:!bg-green-100">Get involved</Link>
+            <Link href="/pledge" className="btn-outline !border-white !text-white hover:!bg-peat-light">Sign the pledge</Link>
           </div>
         </div>
       </Section>
     </>
+  );
+}
+
+function FeatureIcon({ d }: { d: string }) {
+  return (
+    <svg className="h-10 w-10 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={d} />
+    </svg>
   );
 }

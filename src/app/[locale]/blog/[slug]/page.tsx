@@ -21,9 +21,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
 
   return (
     <article className="container-page max-w-3xl py-12">
-      <Link href="/blog" className="text-sm font-medium text-sky-600">← All posts</Link>
-      <h1 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 md:text-4xl">{post.title}</h1>
-      <p className="mt-2 text-sm text-navy-500">
+      <Link href="/blog" className="text-sm font-medium text-green-700">← All posts</Link>
+      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink md:text-4xl">{post.title}</h1>
+      <p className="mt-2 text-sm text-ink-500">
         {new Date(post.publishedAt).toLocaleDateString('en-IE', { dateStyle: 'long' })} · {post.author}
       </p>
       <div className="prose-body mt-6 space-y-4">
@@ -31,7 +31,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
           <p key={i}>{para}</p>
         ))}
       </div>
-      <p className="mt-10 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+      <p className="mt-10 rounded-sm border border-ink-200 bg-white px-3 py-2 text-xs text-ink-700">
         Figures referenced are modelled estimates unless stated. Not financial advice. Irish Grid is independent and not affiliated with EirGrid or SONI.
       </p>
     </article>

@@ -36,9 +36,9 @@ function Slider({
 }) {
   return (
     <label className="block">
-      <span className="flex justify-between text-sm font-medium text-navy-800">
+      <span className="flex justify-between text-sm font-medium text-ink-800">
         <span>{label}</span>
-        <span className="text-sky-600">{format(value)}</span>
+        <span className="text-green-700">{format(value)}</span>
       </span>
       <input
         type="range"
@@ -47,7 +47,7 @@ function Slider({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1 w-full accent-sky-500"
+        className="mt-1 w-full accent-green-600"
       />
     </label>
   );
@@ -100,19 +100,19 @@ export function ForecastExplorer() {
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <div className="space-y-6">
         <div className="card">
-          <h3 className="font-semibold text-navy-900">Curtailment vs energy recovered by mining</h3>
+          <h3 className="font-semibold text-ink">Curtailment vs energy recovered by mining</h3>
           <ForecastChart data={chartData} />
         </div>
         <div className="card">
-          <h3 className="font-semibold text-navy-900">Savings per household</h3>
+          <h3 className="font-semibold text-ink">Savings per household</h3>
           <SavingsChart data={savingsData} />
         </div>
 
         <div className="card overflow-x-auto">
-          <h3 className="mb-3 font-semibold text-navy-900">By year (selected milestones)</h3>
+          <h3 className="mb-3 font-semibold text-ink">By year (selected milestones)</h3>
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-navy-200 text-left text-navy-600">
+              <tr className="border-b border-ink-200 text-left text-ink-600">
                 <th className="py-2 pr-4">Year</th>
                 <th className="py-2 pr-4">Renewables</th>
                 <th className="py-2 pr-4">% of demand</th>
@@ -125,13 +125,13 @@ export function ForecastExplorer() {
               {summary.points
                 .filter((p) => p.year % 5 === 0 || p.year === summary.year)
                 .map((p) => (
-                  <tr key={p.year} className="border-b border-navy-100">
+                  <tr key={p.year} className="border-b border-ink-200">
                     <td className="py-2 pr-4 font-medium">{p.year}</td>
                     <td className="py-2 pr-4">{num(p.renewableCapacityGw, 1)} GW</td>
                     <td className="py-2 pr-4">{pct(p.penetrationPct, 0)}</td>
-                    <td className="py-2 pr-4 text-orange-700">{num(p.curtailmentGwh / 1000, 1)} TWh</td>
-                    <td className="py-2 pr-4 text-emerald-700">{eur(p.recoveredValueEur, { compact: true })}</td>
-                    <td className="py-2 text-emerald-700">{eur(p.savingPerHouseholdEur)}</td>
+                    <td className="py-2 pr-4 text-green-700">{num(p.curtailmentGwh / 1000, 1)} TWh</td>
+                    <td className="py-2 pr-4 text-orange-700">{eur(p.recoveredValueEur, { compact: true })}</td>
+                    <td className="py-2 text-orange-700">{eur(p.savingPerHouseholdEur)}</td>
                   </tr>
                 ))}
             </tbody>
@@ -142,7 +142,7 @@ export function ForecastExplorer() {
       <aside className="space-y-5">
         <div className="card space-y-4">
           <div>
-            <p className="mb-2 text-sm font-medium text-navy-800">Growth pathway</p>
+            <p className="mb-2 text-sm font-medium text-ink-800">Growth pathway</p>
             <div className="flex flex-wrap gap-2">
               {PATHWAYS.map((p) => (
                 <button
@@ -150,7 +150,7 @@ export function ForecastExplorer() {
                   type="button"
                   onClick={() => setPathway(p.key)}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                    pathway === p.key ? 'bg-navy-700 text-white' : 'bg-navy-50 text-navy-700'
+                    pathway === p.key ? 'bg-peat text-white' : 'bg-paper text-ink-700'
                   }`}
                 >
                   {p.label}

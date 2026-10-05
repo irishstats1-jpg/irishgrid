@@ -11,7 +11,7 @@ export default function MapWidget() {
   const gens = detailed ? GENERATORS : GENERATORS.filter((g) => g.isMajor);
   return (
     <div className="p-3" style={{ maxWidth: 440 }}>
-      <p className="mb-2 text-sm font-semibold text-navy-700">Ireland&apos;s major generators · Irish Grid</p>
+      <p className="mb-2 text-sm font-semibold text-ink-700">Ireland&apos;s major generators · Irish Grid</p>
       <IrelandMap generators={gens} detailed={detailed} onToggleDetailed={() => setDetailed((v) => !v)} />
     </div>
   );

@@ -56,13 +56,13 @@ export default async function AdminSection({ params }: { params: Promise<{ secti
   if (!s) notFound();
   return (
     <div className="max-w-2xl space-y-4">
-      <h1 className="text-2xl font-bold text-navy-900">{s.title}</h1>
-      <p className="text-navy-700">{s.desc}</p>
-      <div className="rounded-lg border border-navy-100 bg-white p-4 text-sm text-navy-600">
-        <p className="font-medium text-navy-900">Data</p>
+      <h1 className="text-2xl font-semibold text-ink">{s.title}</h1>
+      <p className="text-ink-700">{s.desc}</p>
+      <div className="rounded-sm border border-ink-200 bg-white p-4 text-sm text-ink-600">
+        <p className="font-medium text-ink">Data</p>
         <p className="mt-1">{s.io}</p>
       </div>
-      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+      <p className="rounded-sm border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700">
         The data model, APIs and public rendering for this section are in place; wire the CRUD UI to Supabase to complete it.
       </p>
     </div>
