@@ -3,7 +3,7 @@ import { eurModel, eurRange, gwh, pct } from '@/lib/format';
 import { approx } from '@/lib/basis';
 import { BasisTag } from './ui';
 
-const TH = 'py-2 pr-4 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700';
+const TH = 'py-2 pr-4 font-display text-[14px] font-semibold text-ink-700';
 
 /** Year-by-year volume and modelled cost. Volumes are reported; every € is modelled (≈). */
 export function AnnualTable({ years }: { years: YearMetrics[] }) {

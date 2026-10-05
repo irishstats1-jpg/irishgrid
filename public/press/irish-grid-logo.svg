@@ -1,10 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40">
-  <rect width="200" height="40" fill="#ffffff"/>
-  <g stroke="#4db8e8" stroke-width="2" fill="none">
-    <path d="M6 30 L18 10 L30 30"/>
-    <path d="M10 22 L26 22"/>
-    <path d="M14 30 L18 20 L22 30"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 80" width="520" height="80">
+  <title>Irish Grid — Independent evidence on Ireland’s electricity grid</title>
+  <rect width="520" height="80" fill="#F2F2F3"/>
+  <g transform="translate(12.5 12.5) scale(1.6)">
+    <rect x="0.75" y="0.75" width="8.5" height="8.5" fill="none" stroke="#1D1F20" stroke-width="1.5"/>
+    <rect x="13.25" y="0.75" width="8.5" height="8.5" fill="none" stroke="#1D1F20" stroke-width="1.5"/>
+    <rect x="25" y="0" width="10" height="10" fill="#F7931A"/>
+    <rect x="0" y="12.5" width="10" height="10" fill="#169B62"/>
+    <rect x="12.5" y="12.5" width="10" height="10" fill="#169B62"/>
+    <rect x="25" y="12.5" width="10" height="10" fill="#169B62"/>
+    <rect x="0" y="25" width="10" height="10" fill="#169B62"/>
+    <rect x="12.5" y="25" width="10" height="10" fill="#169B62"/>
+    <rect x="25" y="25" width="10" height="10" fill="#169B62"/>
   </g>
-  <circle cx="18" cy="10" r="2.5" fill="#4db8e8"/>
-  <text x="42" y="27" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#0b2545">Irish<tspan fill="#2b9fd6"> Grid</tspan></text>
+  <text x="88" y="42" font-family="'Barlow Condensed', 'Arial Narrow', Arial, sans-serif" font-size="34" font-weight="600" fill="#1D1F20">Irish Grid</text>
+  <text x="88" y="63" font-family="Barlow, Arial, sans-serif" font-size="15" fill="#4F5357">Independent evidence on Ireland’s electricity grid</text>
 </svg>

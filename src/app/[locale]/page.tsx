@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { YearExplorer } from '@/components/YearExplorer';
@@ -11,6 +12,10 @@ import { eur, eurModel, gwh, pct } from '@/lib/format';
 import { approx, asOfDate, btcFigure, btcTags, volumeTags } from '@/lib/basis';
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

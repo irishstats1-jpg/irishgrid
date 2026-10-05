@@ -10,7 +10,7 @@ body {
   @apply bg-paper font-sans text-ink antialiased;
 }
 
-/* Barlow Condensed over Barlow (Brand Book §05). */
+/* Barlow Condensed over Barlow, sentence case throughout (Brand Book v2.0). */
 h1,
 h2,
 h3,
@@ -37,33 +37,37 @@ textarea:focus-visible {
   .container-page {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
-  /* Display · 72/0.95 · Condensed 600 caps — scaled down on small screens. */
+  /* Title · 56 · Condensed 600, sentence case — scaled down on small screens. */
   .display {
-    @apply font-display font-semibold uppercase leading-[0.95] tracking-tight;
+    @apply font-display font-semibold leading-[1.0] tracking-[-0.01em];
+  }
+  /* Finding · 24 · Barlow 500 — the one-sentence result a section leads with. */
+  .finding {
+    @apply font-sans text-[22px] font-medium leading-[1.35] text-ink md:text-[24px];
   }
   /* Figure · Condensed 600, tight leading, in the 700 step of its colour. */
   .figure {
     @apply font-display font-semibold leading-[0.9] tabular-nums;
   }
-  /* Label · 13 · Condensed 500 caps +12% tracking. */
+  /* Label · 15 · Condensed 600, sentence case (e.g. "01 · An Fhadhb — The problem"). */
   .eyebrow {
-    @apply font-display text-[13px] font-medium uppercase tracking-[0.12em] text-ink-600;
+    @apply font-display text-[15px] font-semibold tracking-[0.01em] text-ink-600;
   }
   .card {
     @apply min-w-0 rounded-sm border border-ink-200 bg-white p-5;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-sm bg-peat px-5 py-2.5 font-display text-[17px] font-semibold uppercase tracking-[0.04em] text-white transition hover:bg-peat-light;
+    @apply inline-flex items-center justify-center rounded-sm bg-peat px-5 py-2.5 font-display text-[17px] font-semibold tracking-[0.01em] text-white transition hover:bg-peat-light;
   }
-  /* Block Orange is the primary call to action — it leads to the fix. */
+  /* Flex Orange leads to the option (step 03) — used sparingly. */
   .btn-accent {
-    @apply inline-flex items-center justify-center rounded-sm bg-orange-500 px-5 py-2.5 font-display text-[17px] font-semibold uppercase tracking-[0.04em] text-ink transition hover:bg-orange-400;
+    @apply inline-flex items-center justify-center rounded-sm bg-orange-500 px-5 py-2.5 font-display text-[17px] font-semibold tracking-[0.01em] text-ink transition hover:bg-orange-400;
   }
   .btn-outline {
-    @apply inline-flex items-center justify-center rounded-sm border border-ink-300 px-5 py-2.5 font-display text-[17px] font-semibold uppercase tracking-[0.04em] text-ink transition hover:bg-ink-100;
+    @apply inline-flex items-center justify-center rounded-sm border border-ink-300 px-5 py-2.5 font-display text-[17px] font-semibold tracking-[0.01em] text-ink transition hover:bg-ink-100;
   }
   .prose-body {
-    @apply text-[17px] leading-[1.55] text-ink-800;
+    @apply text-[17px] leading-[1.6] text-ink-800;
   }
   .link {
     @apply font-medium text-green-700 underline decoration-green-500/50 underline-offset-2 hover:decoration-green-700;
@@ -81,5 +85,24 @@ textarea:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print: briefs and pages print on A4 without site chrome. */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+@media print {
+  body {
+    background: #ffffff;
+  }
+  .container-page {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  a {
+    text-decoration: none;
   }
 }

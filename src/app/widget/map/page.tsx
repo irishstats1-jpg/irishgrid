@@ -13,6 +13,10 @@ export default function MapWidget() {
     <div className="p-3" style={{ maxWidth: 440 }}>
       <p className="mb-2 text-sm font-semibold text-ink-700">Ireland&apos;s major generators · Irish Grid</p>
       <IrelandMap generators={gens} detailed={detailed} onToggleDetailed={() => setDetailed((v) => !v)} />
+      <p className="mt-1 text-[11px] text-ink-600">
+        <a href="https://irishgrid.com" target="_blank" rel="noopener noreferrer" className="underline">Irish Grid</a> ·
+        independent and non-partisan, no connection to EirGrid or SONI
+      </p>
     </div>
   );
 }

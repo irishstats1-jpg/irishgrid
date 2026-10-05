@@ -12,6 +12,7 @@ import { eurModel, eurRange, gwh, num, pct } from '@/lib/format';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/proposal' },
   title: 'The policy option — using Ireland’s surplus wind',
   description:
     'Three policy options to let flexible, interruptible demand use wind power Ireland currently turns away — with the costs, the break-even price, and how flexible mining compares with the alternatives.',
@@ -203,7 +204,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
             <thead>
               <tr className="border-b border-ink-700 text-left">
                 {['Option', 'What it does', 'Time to deliver', 'Who pays', 'Limits'].map((h) => (
-                  <th key={h} scope="col" className="py-2 pr-4 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">
+                  <th key={h} scope="col" className="py-2 pr-4 font-display text-[14px] font-semibold text-ink-700">
                     {h}
                   </th>
                 ))}

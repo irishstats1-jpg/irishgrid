@@ -9,6 +9,7 @@ import { INDEPENDENCE_LINE, SITE_URL } from '@/lib/site';
 
 export const revalidate = 3600;
 export const metadata: Metadata = {
+  alternates: { canonical: '/press' },
   title: 'Press',
   description: 'Key figures with their sources, boilerplate, logos and embeddable widgets for journalists covering wind dispatch-down in Ireland.',
 };

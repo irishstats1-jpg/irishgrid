@@ -9,6 +9,7 @@ import { gwh, num, pct } from '@/lib/format';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/bitcoin' },
   title: 'The flexible load — how Bitcoin mining uses electricity',
   description:
     'A plain-English briefing on the Bitcoin network: how mining works, how much electricity it uses, why it can be switched off in seconds, and the fair criticisms of it.',

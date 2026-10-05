@@ -5,6 +5,7 @@ import { PageHeader, Section, Callout } from '@/components/ui';
 import { INDEPENDENCE_LINE, REPO_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/about' },
   title: 'About',
   description:
     'What Irish Grid is, what it is for, and how it keeps evidence and advocacy apart. Independent and non-partisan, with no connection to EirGrid or SONI.',

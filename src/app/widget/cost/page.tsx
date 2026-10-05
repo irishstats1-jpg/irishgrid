@@ -10,7 +10,7 @@ export default async function CostWidget() {
   const y = getHeadlineYear();
   return (
     <div className="rounded-sm bg-peat p-5 text-white" style={{ maxWidth: 360 }}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-green-300">Irish Grid · Ireland · {y.year}</p>
+      <p className="text-sm font-semibold text-green-300">Irish Grid · Ireland · {y.year}</p>
       <p className="mt-2 text-3xl font-semibold">{gwh(y.windMwh)}</p>
       <p className="text-sm text-white/90">
         of wind power turned away
@@ -23,6 +23,7 @@ export default async function CostWidget() {
       <a href="https://irishgrid.com/methodology" target="_blank" rel="noopener noreferrer" className="mt-3 block text-xs text-green-300 hover:underline">
         irishgrid.com · how these figures are made
       </a>
+      <p className="mt-1 text-[11px] text-white/70">Independent and non-partisan. No connection to EirGrid or SONI.</p>
     </div>
   );
 }

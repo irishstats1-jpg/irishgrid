@@ -3,7 +3,8 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { getPost, getPosts, POST_ALIASES } from '@/lib/data/blog';
-import { INDEPENDENCE_LINE } from '@/lib/site';
+import { INDEPENDENCE_LINE, SITE_URL } from '@/lib/site';
+import { JsonLd } from '@/components/JsonLd';
 
 export const revalidate = 300;
 
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) return { title: 'Not found' };
-  return { title: post.title, description: post.excerpt, openGraph: { title: post.title, description: post.excerpt, type: 'article' } };
+  return { title: post.title, description: post.excerpt, alternates: { canonical: `/blog/${post.slug}` }, openGraph: { title: post.title, description: post.excerpt, type: 'article' } };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
@@ -23,6 +24,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
 
   return (
     <article className="container-page max-w-3xl py-12">
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: post.title,
+          description: post.excerpt,
+          datePublished: post.publishedAt,
+          inLanguage: 'en-IE',
+          url: `${SITE_URL}/blog/${post.slug}`,
+          author: { '@type': 'Organization', name: post.author, url: SITE_URL },
+          publisher: { '@type': 'Organization', name: 'Irish Grid', url: SITE_URL },
+          ...(post.sources?.length ? { citation: post.sources.map((s) => s.url) } : {}),
+        }}
+      />
       <Link href="/blog" className="text-sm font-medium text-green-700">← All posts</Link>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink md:text-4xl">{post.title}</h1>
       <p className="mt-2 text-sm text-ink-500">

@@ -3,9 +3,11 @@ import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { PageHeader, Section, BasisTag } from '@/components/ui';
 import { DATA_LICENCE, DATASETS } from '@/lib/data/datasets';
-import { METHOD_VERSION, REPO_URL } from '@/lib/site';
+import { METHOD_VERSION, REPO_URL, SITE_URL } from '@/lib/site';
+import { JsonLd } from '@/components/JsonLd';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/data' },
   title: 'Data',
   description:
     'Download the data behind Irish Grid as CSV or JSON: the annual wind dispatch-down series, the modelled cost and Bitcoin figures, every assumption, and the generator list — with a data dictionary. CC BY 4.0.',
@@ -16,6 +18,25 @@ export default async function DataPage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale);
   return (
     <>
+      <JsonLd
+        data={DATASETS.filter((d) => d.basis !== 'Reference').map((d) => ({
+          '@context': 'https://schema.org',
+          '@type': 'Dataset',
+          name: d.title,
+          description: d.description,
+          url: `${SITE_URL}/data`,
+          license: DATA_LICENCE.url,
+          isAccessibleForFree: true,
+          creator: { '@type': 'Organization', name: 'Irish Grid', url: SITE_URL },
+          spatialCoverage: 'Ireland',
+          temporalCoverage: '2020/2025',
+          variableMeasured: d.columns.map((c) => c.name),
+          distribution: [
+            { '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${SITE_URL}/api/data/${d.slug}` },
+            { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: `${SITE_URL}/api/data/${d.slug}?format=json` },
+          ],
+        }))}
+      />
       <PageHeader
         eyebrow="Open data"
         title="The data, to check and reuse"

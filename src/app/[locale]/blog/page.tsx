@@ -6,6 +6,7 @@ import { getPosts } from '@/lib/data/blog';
 
 export const revalidate = 300;
 export const metadata: Metadata = {
+  alternates: { canonical: '/blog' },
   title: 'Blog',
   description: 'Analysis and explainers on Ireland’s grid, curtailment, and the case for flexible mining load.',
 };

@@ -1,10 +1,9 @@
 import type { Config } from 'tailwindcss';
 
-// Irish Grid brand tokens (Brand Book, October 2026): "Green is the grid.
-// Orange is the fix." Grid Green carries every figure about waste, compensation
-// and the grid; Block Orange is reserved for the Bitcoin counterpart; Paper is
-// the neutral ground for sources and methods; fossil generation is grey.
-// Body-size coloured text uses the 700 step (base 500s are below 4.5:1 on paper).
+// Irish Grid brand tokens (Brand Book v2.0, October 2026). Mix: Paper 60%,
+// Peat 20%, Grid Green 10%; Flex Orange is rare — the Bitcoin counterpart and
+// the policy option only. Body-size coloured text uses the 700 text steps
+// (#0B623D, #9A5200); the 500 base colours are below 4.5:1 on paper.
 const config: Config = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
@@ -17,7 +16,7 @@ const config: Config = {
           400: '#52BC88',
           500: '#169B62', // Grid Green — Irish flag green
           600: '#0E8253',
-          700: '#0D6440', // text step
+          700: '#0B623D', // text step (Grid Green text)
           800: '#0A4A2F',
           900: '#062E1D', // Peat
         },
@@ -26,9 +25,9 @@ const config: Config = {
           200: '#FDDFBD',
           300: '#FCC88C',
           400: '#F9AE55',
-          500: '#F7931A', // Block Orange — Bitcoin orange
+          500: '#F7931A', // Flex Orange
           600: '#DB7A0A',
-          700: '#9C5306', // text step
+          700: '#9A5200', // text step (Flex Orange text)
           800: '#6E3B06',
           900: '#452404',
         },

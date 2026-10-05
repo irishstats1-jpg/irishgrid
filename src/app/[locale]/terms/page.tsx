@@ -6,6 +6,7 @@ import { DATA_LICENCE } from '@/lib/data/datasets';
 import { INDEPENDENCE_LINE, REPO_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/terms' },
   title: 'Terms of use',
   description: 'How you may reuse Irish Grid’s text, data and charts (CC BY 4.0), and the limits of what the figures claim.',
 };

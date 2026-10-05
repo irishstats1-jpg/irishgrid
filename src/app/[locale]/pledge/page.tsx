@@ -5,6 +5,7 @@ import { PledgeForm } from '@/components/PledgeForm';
 import { getPledgeCount } from '@/lib/integrations';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/pledge' },
   title: 'Pledge your support',
   description:
     'Sign the Irish Grid pledge: end the waste of Ireland’s clean power and let flexible demand use surplus renewable electricity at constrained sites, without subsidy.',

@@ -18,6 +18,7 @@ import { eur, eurModel, gwh, num, pct } from '@/lib/format';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/methodology' },
   title: 'Method',
   description:
     'How every figure on Irish Grid is made: the one data series used, the cost model and its assumptions, the Bitcoin revenue and cost model, the 20-year scenario, and what the site deliberately does not estimate.',
@@ -79,7 +80,7 @@ export default async function MethodologyPage({ params }: { params: Promise<{ lo
             <thead>
               <tr className="border-b border-ink-700 text-left">
                 {['Year', 'Wind dispatch-down', '% of available wind', 'Basis', 'Source'].map((h) => (
-                  <th key={h} className="py-2 pr-4 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">
+                  <th key={h} className="py-2 pr-4 font-display text-[14px] font-semibold text-ink-700">
                     {h}
                   </th>
                 ))}
@@ -141,7 +142,7 @@ per_household_€  = cost_€ ÷ ${num(HOUSEHOLDS.count)}`}</Formula>
             <thead>
               <tr className="border-b border-ink-700 text-left">
                 {['Assumption', 'Low', 'Central', 'High'].map((h) => (
-                  <th key={h} className="py-2 pr-4 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">{h}</th>
+                  <th key={h} className="py-2 pr-4 font-display text-[14px] font-semibold text-ink-700">{h}</th>
                 ))}
               </tr>
             </thead>

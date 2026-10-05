@@ -17,7 +17,7 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-16 bg-peat text-white/90">
+    <footer className="mt-16 bg-peat text-white/90 print:hidden">
       <div className="container-page py-12">
         <div className="grid gap-px overflow-hidden rounded-sm border border-white/15 bg-white/15 md:grid-cols-2 lg:grid-cols-4">
           <FooterBox title={t('independenceTitle')} body={t('independenceBody')} />
@@ -38,13 +38,14 @@ export function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col gap-6 border-t border-white/15 pt-8 md:flex-row md:items-center md:justify-between">
-          <Wordmark tone="dark" markClassName="h-7 w-7" />
+          <Wordmark tone="dark" markClassName="h-9 w-9" />
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="Footer">
             <Link href="/" className="hover:text-white">{tn('home')}</Link>
             <Link href="/bitcoin" className="hover:text-white">{tn('bitcoin')}</Link>
             <Link href="/proposal" className="hover:text-white">{tn('proposal')}</Link>
             <Link href="/get-involved" className="hover:text-white">{tn('getInvolved')}</Link>
             <Link href="/blog" className="hover:text-white">{tn('blog')}</Link>
+            <Link href="/briefs" className="hover:text-white">{tn('briefs')}</Link>
             <Link href="/methodology" className="hover:text-white">{tn('methodology')}</Link>
             <Link href="/about" className="hover:text-white">{tn('about')}</Link>
             <Link href="/press" className="hover:text-white">{tn('press')}</Link>

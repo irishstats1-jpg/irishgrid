@@ -74,7 +74,7 @@ export interface FigureSide {
 
 const FIGURE_SIZES = {
   lg: 'text-[64px] md:text-[96px]',
-  md: 'text-[48px] md:text-[60px]',
+  md: 'text-[48px] md:text-[60px] print:text-[34px]',
   sm: 'text-[36px] md:text-[40px]',
 } as const;
 
@@ -114,7 +114,7 @@ function FigureHalf({
   const isGreen = tone === 'green';
   const divider = stacked ? 'border-t border-ink-200' : 'border-t border-ink-200 md:border-l md:border-t-0';
   return (
-    <div className={`flex flex-col p-5 md:p-6 ${isGreen ? 'bg-white' : `bg-orange-100 ${divider}`}`}>
+    <div className={`flex flex-col p-5 md:p-6 print:p-3 print:[print-color-adjust:exact] ${isGreen ? 'bg-white' : `bg-orange-100 ${divider}`}`}>
       <p className="eyebrow flex items-center gap-2 !text-ink-800">
         <span className={`inline-block h-3 w-3 shrink-0 ${isGreen ? 'bg-green-500' : 'bg-orange-500'}`} aria-hidden />
         {side.label}
@@ -147,7 +147,7 @@ export function SingleFigure({
 export function WhyDiffer({ children }: { children: ReactNode }) {
   return (
     <p className="mt-3 text-[13px] text-ink-600">
-      <span className="font-display font-semibold uppercase tracking-[0.08em] text-ink-800">Why these differ · </span>
+      <span className="font-display font-semibold text-ink-800">Why these differ · </span>
       {children}
     </p>
   );
@@ -175,7 +175,7 @@ export function NotFinancialAdvice({
       : undefined;
   return (
     <p className="border border-ink-200 bg-white px-3 py-2 text-xs leading-relaxed text-ink-700">
-      <span className="font-display font-semibold uppercase tracking-[0.08em] text-orange-700">† Bitcoin figures · </span>
+      <span className="font-display font-semibold text-orange-700">† Bitcoin figures · </span>
       Modelled gross revenue at the BTC price{price ? ` (${price})` : ''} and network hashrate
       {asOf ? ` on ${asOf}` : ' on the date shown'}
       {live === false ? ' (stored snapshot — live data unavailable)' : ''}, before hardware, power and running costs.
@@ -231,7 +231,7 @@ export function PageHeader({
     <div className="border-b border-ink-200">
       <div className="container-page py-10 md:py-14">
         {eyebrow && <p className={`eyebrow mb-3 ${step ? STEP_EYEBROW[step] : ''}`}>{eyebrow}</p>}
-        <h1 className="display max-w-4xl text-[44px] md:text-[64px]">{title}</h1>
+        <h1 className="display max-w-4xl text-[40px] md:text-[56px]">{title}</h1>
         {intro && <div className="prose-body mt-5 max-w-3xl">{intro}</div>}
       </div>
     </div>

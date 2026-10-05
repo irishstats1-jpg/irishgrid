@@ -4,6 +4,7 @@ import { PageHeader, Section } from '@/components/ui';
 import { GetInvolvedForms, type Pathway } from '@/components/GetInvolvedForms';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/get-involved' },
   title: 'Get involved',
   description:
     'Request a briefing on dispatch-down and flexible demand, host or partner on a pilot at a constrained site, or support Irish Grid’s research.',

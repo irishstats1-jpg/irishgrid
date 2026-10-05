@@ -6,6 +6,7 @@ import { RETENTION } from '@/lib/integrations';
 import { INDEPENDENCE_LINE } from '@/lib/site';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/privacy' },
   title: 'Privacy',
   description:
     'What personal data Irish Grid collects through its pledge and Get involved forms, why, on what legal basis, who processes it, how long it is kept, and your rights.',
@@ -47,7 +48,7 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
               <thead>
                 <tr className="border-b border-ink-700 text-left">
                   {['What', 'Data', 'Purpose', 'Legal basis', 'Kept for'].map((h) => (
-                    <th key={h} className="py-2 pr-3 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">{h}</th>
+                    <th key={h} className="py-2 pr-3 font-display text-[14px] font-semibold text-ink-700">{h}</th>
                   ))}
                 </tr>
               </thead>
