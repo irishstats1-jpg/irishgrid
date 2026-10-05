@@ -51,6 +51,7 @@ export function Footer() {
             <Link href="/pledge" className="hover:text-white">{tn('pledge')}</Link>
             <Link href="/data" className="hover:text-white">{tn('data')}</Link>
             <Link href="/privacy" className="hover:text-white">Privacy</Link>
+            <Link href="/terms" className="hover:text-white">Terms</Link>
           </nav>
         </div>
 

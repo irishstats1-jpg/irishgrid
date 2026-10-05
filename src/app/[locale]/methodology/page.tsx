@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { PageHeader, Section, Callout } from '@/components/ui';
 import { getAllYears, getBtcMarket, getHeadlineYear, refreshLiveData } from '@/lib/data/metrics';

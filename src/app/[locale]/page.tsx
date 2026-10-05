@@ -1,4 +1,4 @@
-import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { YearExplorer } from '@/components/YearExplorer';
 import { AnnualTable } from '@/components/AnnualTable';

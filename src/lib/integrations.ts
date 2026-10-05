@@ -178,3 +178,36 @@ export async function notifyOwner(subject: string, fields: Record<string, string
     .join('\n');
   return sendEmail(to, subject, body);
 }
+
+// ---- Retention (privacy notice) ---------------------------------------------------
+
+export const RETENTION = {
+  /** Unconfirmed pledges are deleted after this many days. */
+  unconfirmedPledgeDays: 30,
+  /** Get Involved submissions are deleted after this many days (two years). */
+  submissionDays: 730,
+} as const;
+
+/** Delete data past its retention period. Run daily from the cron route. */
+export async function purgeExpired(now = new Date()): Promise<{ pledges: boolean; submissions: boolean } | null> {
+  const db = supabase();
+  if (!db) return null;
+  const before = (days: number) => new Date(now.getTime() - days * 86_400_000).toISOString();
+  const del = async (query: string) => {
+    try {
+      const res = await fetch(`${db.url}/rest/v1/${query}`, {
+        method: 'DELETE',
+        headers: headers(db.key, { Prefer: 'return=minimal' }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
+  return {
+    pledges: await del(
+      `pledges?confirm_token=not.is.null&created_at=lt.${encodeURIComponent(before(RETENTION.unconfirmedPledgeDays))}`,
+    ),
+    submissions: await del(`submissions?created_at=lt.${encodeURIComponent(before(RETENTION.submissionDays))}`),
+  };
+}

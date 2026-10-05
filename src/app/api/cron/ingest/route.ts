@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAllYears, getBtcMarket, refreshLiveData } from '@/lib/data/metrics';
+import { purgeExpired } from '@/lib/integrations';
 
 // Hourly refresh. Triggered by a Cloudflare Cron Trigger with CRON_SECRET (or
 // MAKE_SOCIAL_WEBHOOK_SECRET). Idempotent: refresh the market snapshot and the
-// annual series, recompute the annual figures, and report what was used.
+// annual series, recompute the annual figures, and report what was used. The
+// daily run (?job=daily) also deletes data past its retention period.
 export const dynamic = 'force-dynamic';
 
 function authorized(request: Request): boolean {
@@ -28,6 +30,8 @@ async function runIngest(request: Request) {
   await refreshLiveData();
   const market = getBtcMarket();
 
+  const purged = job === 'daily' ? await purgeExpired() : undefined;
+
   const recomputed = getAllYears().map((m) => ({
     year: m.year,
     method: m.method,
@@ -47,6 +51,7 @@ async function runIngest(request: Request) {
       live: market.live,
     },
     recomputed,
+    ...(purged !== undefined ? { purged } : {}),
   });
 }
 

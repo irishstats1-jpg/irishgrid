@@ -1,12 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
-import { locales, defaultLocale } from './i18n/config';
+import { routing } from './i18n/routing';
 
-export default createMiddleware({
-  locales,
-  defaultLocale,
-  // 'as-needed' keeps English URLs clean (/curtailment) and prefixes Irish (/ga/curtailment).
-  localePrefix: 'as-needed',
-});
+export default createMiddleware(routing);
 
 export const config = {
   // Match everything except api, static assets, widgets, admin and files.

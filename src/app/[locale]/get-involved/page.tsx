@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { PageHeader, Section } from '@/components/ui';
 import { GetInvolvedForms, type Pathway } from '@/components/GetInvolvedForms';
 

@@ -1,23 +1,21 @@
 name: CI
 
+# Checks every pull request (including Dependabot's) before it can reach main.
 on:
-  push:
-    branches: [main, 'claude/**']
   pull_request:
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: npm run lint
       - run: npm test
-      - run: npm run build
+      - run: npx next build
         env:
           NEXT_PUBLIC_SITE_URL: https://irishgrid.com

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { getPost, getPosts, POST_ALIASES } from '@/lib/data/blog';
 import { INDEPENDENCE_LINE } from '@/lib/site';

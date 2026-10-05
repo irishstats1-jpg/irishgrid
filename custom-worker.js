@@ -9,7 +9,7 @@ export default {
   fetch: handler.fetch,
 
   async scheduled(event, env, ctx) {
-    // 06:15 trigger = daily milestone job; every other firing = hourly refresh.
+    // 06:15 trigger = daily job (refresh + retention purge); every other firing = hourly refresh.
     const isDaily = event.cron === '15 6 * * *';
     const secret = env.MAKE_SOCIAL_WEBHOOK_SECRET || env.CRON_SECRET;
     const request = new Request(
