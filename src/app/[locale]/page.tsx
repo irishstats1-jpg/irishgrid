@@ -7,7 +7,7 @@ import { GeneratorMap } from '@/components/GeneratorMap';
 import { Callout, Framed, NotFinancialAdvice, PairedFigure, TagRow, Takeaway, WhyDiffer } from '@/components/ui';
 import { getAllYears, getBtcMarket, getHeadlineYear, refreshLiveData } from '@/lib/data/metrics';
 import { ALL_ISLAND_WIND_PCT } from '@/lib/data/dispatchDown';
-import { WHOLESALE_REF_EUR_PER_MWH } from '@/lib/methodology';
+import { COST_CASES, WHOLESALE_REF_EUR_PER_MWH } from '@/lib/methodology';
 import { eur, eurModel, gwh, pct } from '@/lib/format';
 import { approx, asOfDate, btcFigure, btcTags, volumeTags } from '@/lib/basis';
 
@@ -122,6 +122,37 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </p>
         <div className="card">
           <AnnualTable years={years} />
+          <details className="mt-4 border-t border-ink-200 pt-3">
+            <summary className="cursor-pointer text-sm font-medium text-green-700">The assumptions behind the range</summary>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full max-w-2xl border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-ink-700 text-left">
+                    {['', 'Low', 'Central', 'High'].map((h) => (
+                      <th key={h} scope="col" className="py-1.5 pr-4 font-display text-[14px] font-semibold text-ink-700">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(
+                    [
+                      ['Compensation rate', (c: (typeof COST_CASES)['low']) => `€${c.compensationEurPerMwh}/MWh`],
+                      ['Constraint compensated', (c: (typeof COST_CASES)['low']) => pct(c.compensatedShareConstraint * 100, 0)],
+                      ['Curtailment compensated', (c: (typeof COST_CASES)['low']) => pct(c.compensatedShareCurtailment * 100, 0)],
+                      ['Constraint share if not reported', (c: (typeof COST_CASES)['low']) => pct(c.defaultConstraintShare * 100, 0)],
+                    ] as const
+                  ).map(([label, f]) => (
+                    <tr key={label} className="border-b border-ink-200">
+                      <th scope="row" className="py-1.5 pr-4 text-left font-normal text-ink-700">{label}</th>
+                      {(['low', 'central', 'high'] as const).map((k) => (
+                        <td key={k} className="py-1.5 pr-4 tabular-nums">{f(COST_CASES[k])}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
         </div>
         <div className="mt-6 border border-ink-200 p-5">
           <h3 className="text-[22px]">Context: replacing constrained power</h3>

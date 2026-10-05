@@ -292,6 +292,30 @@ break_even_€  = (capex_€/yr + opex_€/yr) ÷ BTC`}</Formula>
         </div>
       </Section>
 
+      <Section title="Changes to the method">
+        <div className="card max-w-3xl">
+          <dl className="space-y-3 text-sm">
+            <div>
+              <dt className="font-semibold text-ink">1.1 · October 2026</dt>
+              <dd className="mt-1 text-ink-700">
+                One series (Ireland, wind, calendar years, 2020 onwards). Synthetic daily and weekly figures and per-plant
+                estimates removed. Cost shown as a low–high range using the reported split where available; one
+                denominator (households, Census 2022). Bitcoin figures labelled gross, with a net model and break-even
+                price; halvings in the scenario. Market snapshot refreshed. 2020 and 2021 added.
+              </dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-ink">1.0 · launch</dt>
+              <dd className="mt-1 text-ink-700">First published method.</dd>
+            </div>
+          </dl>
+          <p className="mt-3 text-[13px] text-ink-600">
+            The full history of every change is in the{' '}
+            <a href={`${REPO}/commits/main`} className="link" target="_blank" rel="noopener noreferrer">code history</a>.
+          </p>
+        </div>
+      </Section>
+
       <Section title="Corrections">
         <Callout tone="proposal" title="Found an error?">
           Open an issue on <a href={`${REPO}/issues`} className="link" target="_blank" rel="noopener noreferrer">GitHub</a>{' '}

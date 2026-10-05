@@ -25,6 +25,10 @@ export default function IrelandMapInner({
     () => Array.from(new Set(generators.map((g) => g.fuelType))),
     [generators],
   );
+  // On touch screens one finger scrolls the page; two fingers move and zoom the
+  // map (Leaflet's pinch handler pans as well as zooms).
+  const coarse = useMemo(() => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches, []);
+  const sorted = useMemo(() => [...generators].sort((a, b) => b.capacityMw - a.capacityMw), [generators]);
 
   return (
     <div>
@@ -42,11 +46,18 @@ export default function IrelandMapInner({
         </button>
       </div>
 
-      <div className="isolate overflow-hidden rounded-sm border border-ink-200">
+      <div className="relative isolate overflow-hidden rounded-sm border border-ink-200">
+        {coarse && (
+          <p className="pointer-events-none absolute bottom-2 left-2 z-[1000] rounded-sm bg-white/90 px-2 py-1 text-[12px] text-ink-700">
+            Use two fingers to move the map
+          </p>
+        )}
         <MapContainer
           center={[53.3, -8.0]}
           zoom={7}
           scrollWheelZoom={false}
+          dragging={!coarse}
+          touchZoom
           style={{ height: 520, width: '100%', background: '#F2F2F3' }}
           attributionControl
         >
@@ -89,6 +100,34 @@ export default function IrelandMapInner({
           ))}
         </MapContainer>
       </div>
+      <details className="mt-3">
+        <summary className="cursor-pointer text-sm font-medium text-green-700">List view ({sorted.length} sites)</summary>
+        <div className="mt-2 max-h-80 overflow-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-ink-700 text-left">
+                {['Site', 'Type', 'Capacity', 'Operator', 'County'].map((h) => (
+                  <th key={h} scope="col" className="py-1.5 pr-3 font-display text-[14px] font-semibold text-ink-700">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((g) => (
+                <tr key={g.id} className="border-b border-ink-200 align-top">
+                  <th scope="row" className="py-1.5 pr-3 text-left font-medium">
+                    {g.name}
+                    {g.note && <span className="block text-[12px] font-normal text-ink-500">{g.note}</span>}
+                  </th>
+                  <td className="py-1.5 pr-3">{FUEL_LABELS[g.fuelType]}</td>
+                  <td className="py-1.5 pr-3 tabular-nums">{g.capacityMw} MW</td>
+                  <td className="py-1.5 pr-3">{g.operator}</td>
+                  <td className="py-1.5">{g.region}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
       <p className="mt-2 text-xs text-ink-500">
         A partial, curated list of large generators and interconnectors — location, fuel and capacity only, last
         reviewed October 2026. Ireland has several hundred wind farms; most are not shown. Coordinates are

@@ -5,8 +5,8 @@ import { PageHeader, Section, Callout, NotFinancialAdvice, PairedFigure } from '
 import { ForecastExplorer } from '@/components/ForecastExplorer';
 import { MiningCalculator } from '@/components/MiningCalculator';
 import { getBtcMarket, getHeadlineYear, refreshLiveData } from '@/lib/data/metrics';
-import { DEFAULT_MINING_COSTS } from '@/lib/methodology';
-import { asOfDate, btcFigure, btcTags, costTags } from '@/lib/basis';
+import { computeMiningEconomics, DEFAULT_ASSUMPTIONS, DEFAULT_MINING_COSTS } from '@/lib/methodology';
+import { asOfDate, btcFigure, btcTags, costTags, priceLabel } from '@/lib/basis';
 import { eurModel, eurRange, gwh, num, pct } from '@/lib/format';
 
 export const revalidate = 3600;
@@ -109,6 +109,20 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
   const asOf = asOfDate(market.asOf);
   const e = y.mining;
 
+  // Sensitivity: net result for the headline volume across BTC prices and
+  // hours of surplus a year (every other assumption at its central value).
+  const prices = [50_000, Math.round(market.priceEur / 100) * 100, 100_000, 150_000];
+  const hoursOptions = [1000, 2000, 4000, 6000];
+  const sensitivity = prices.map((price) =>
+    hoursOptions.map(
+      (hours) =>
+        computeMiningEconomics(y.windMwh, DEFAULT_ASSUMPTIONS, { ...market, priceEur: price }, {
+          ...DEFAULT_MINING_COSTS,
+          surplusHoursPerYear: hours,
+        }).netEur,
+    ),
+  );
+
   return (
     <>
       <PageHeader
@@ -192,6 +206,44 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
             </p>
           )}
         </Callout>
+        <div className="card mt-6 overflow-x-auto">
+          <h3 className="text-[20px]">Net result a year: BTC price against hours of surplus</h3>
+          <p className="mt-1 text-[13px] text-ink-600">
+            The {y.year} volume ({gwh(y.windMwh)}), every other assumption at its central value. Modelled; € a year after
+            hardware, site, operations, network charges and payments to generators.
+          </p>
+          <table className="mt-3 w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-ink-700 text-left">
+                <th scope="col" className="py-2 pr-4 font-display text-[14px] font-semibold text-ink-700">BTC price</th>
+                {hoursOptions.map((h) => (
+                  <th key={h} scope="col" className="py-2 pr-4 text-right font-display text-[14px] font-semibold text-ink-700">
+                    {num(h)} hours
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {prices.map((price, i) => (
+                <tr key={price} className="border-b border-ink-200">
+                  <th scope="row" className="py-2 pr-4 text-left font-medium">
+                    {priceLabel(price)}
+                    {i === 1 && <span className="ml-1 text-[12px] font-normal text-ink-500">(today)</span>}
+                  </th>
+                  {sensitivity[i].map((net, j) => (
+                    <td key={j} className={`py-2 pr-4 text-right tabular-nums ${net >= 0 ? 'font-medium text-orange-700' : 'text-ink-700'}`}>
+                      ≈ {eurModel(net)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-2 text-[12px] text-ink-500">
+            Orange: covers its costs. Fewer hours of surplus mean a larger fleet idle for more of the year, which is why
+            hours matter as much as price.
+          </p>
+        </div>
         <div className="mt-6">
           <MiningCalculator defaultGwh={y.windMwh / 1000} market={market} />
         </div>
