@@ -1,6 +1,8 @@
 name: Site check
 
-# Manual check of how the live site answers crawlers (status, headers, body start).
+# Manual check of how the live site answers crawlers. Results are reported as
+# annotations (status, content type, size, first bytes) so they can be read
+# through the API.
 on:
   workflow_dispatch:
 
@@ -10,11 +12,11 @@ jobs:
     steps:
       - name: Fetch as Googlebot and as a browser
         run: |
-          for ua in "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" "Mozilla/5.0"; do
+          for ua in "Googlebot/2.1 (+http://www.google.com/bot.html)" "Mozilla/5.0"; do
             for path in /sitemap.xml /robots.txt /; do
-              echo "=== $path  UA: $ua"
-              curl -sS -o body.txt -D - -A "$ua" "https://irishgrid.com$path" | head -30
-              echo "--- first 300 bytes:"; head -c 300 body.txt; echo; echo
+              out=$(curl -sS -o body.txt -w '%{http_code} | type=%{content_type} | bytes=%{size_download} | redirect=%{redirect_url}' -A "$ua" "https://irishgrid.com$path" 2>&1)
+              hdr=$(curl -sS -o /dev/null -D - -A "$ua" "https://irishgrid.com$path" | tr -d '\r' | grep -iE '^(server|cf-mitigated|cache-control|x-robots-tag|content-encoding):' | tr '\n' ' ')
+              start=$(head -c 120 body.txt | tr -d '\n\r' | tr '%' '_')
+              echo "::notice title=${path} [${ua%% *}]::${out} | ${hdr} | start=${start}"
             done
           done
-          echo "=== www"; curl -sS -o /dev/null -D - https://www.irishgrid.com/sitemap.xml | head -5 || true
