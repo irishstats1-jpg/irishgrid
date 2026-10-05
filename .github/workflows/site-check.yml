@@ -1,0 +1,20 @@
+name: Site check
+
+# Manual check of how the live site answers crawlers (status, headers, body start).
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch as Googlebot and as a browser
+        run: |
+          for ua in "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" "Mozilla/5.0"; do
+            for path in /sitemap.xml /robots.txt /; do
+              echo "=== $path  UA: $ua"
+              curl -sS -o body.txt -D - -A "$ua" "https://irishgrid.com$path" | head -30
+              echo "--- first 300 bytes:"; head -c 300 body.txt; echo; echo
+            done
+          done
+          echo "=== www"; curl -sS -o /dev/null -D - https://www.irishgrid.com/sitemap.xml | head -5 || true
