@@ -19,7 +19,6 @@ const PROCESSORS = [
   ['Cloudflare', 'Hosts the site, protects it from abuse and limits repeated form submissions. Processes your IP address for each request.'],
   ['Supabase', 'Stores pledges and Get involved submissions in its database.'],
   ['Resend', 'Sends pledge confirmation emails and notifies us of new submissions.'],
-  ['CARTO', 'Serves the map tiles. Your browser requests them directly from CARTO, which sees your IP address.'],
 ];
 
 function H({ children }: { children: React.ReactNode }) {

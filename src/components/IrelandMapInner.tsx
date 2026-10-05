@@ -1,8 +1,9 @@
 'use client';
 
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from 'react-leaflet';
-import { useMemo } from 'react';
+import { MapContainer, GeoJSON, CircleMarker, Pane, Popup, Tooltip } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import type { FeatureCollection } from 'geojson';
 import type { Generator } from '@/lib/data/generators';
 import { FUEL_COLORS, FUEL_LABELS } from '@/lib/data/generators';
 
@@ -29,6 +30,15 @@ export default function IrelandMapInner({
   // map (Leaflet's pinch handler pans as well as zooms).
   const coarse = useMemo(() => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches, []);
   const sorted = useMemo(() => [...generators].sort((a, b) => b.capacityMw - a.capacityMw), [generators]);
+  // Coastline drawn from a self-hosted outline (Natural Earth, public domain):
+  // no third-party tile server, no API key, nothing to break.
+  const [outline, setOutline] = useState<FeatureCollection | null>(null);
+  useEffect(() => {
+    fetch('/geo/ireland.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setOutline)
+      .catch(() => setOutline(null));
+  }, []);
 
   return (
     <div>
@@ -55,17 +65,26 @@ export default function IrelandMapInner({
         <MapContainer
           center={[53.3, -8.0]}
           zoom={7}
+          minZoom={6}
+          maxZoom={10}
+          maxBounds={[[50.8, -11.8], [55.9, -4.5]]}
           scrollWheelZoom={false}
           dragging={!coarse}
           touchZoom
-          style={{ height: 520, width: '100%', background: '#F2F2F3' }}
+          style={{ height: 520, width: '100%', background: '#E6EEF2' }}
           attributionControl
         >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            subdomains="abcd"
-          />
+          {/* Its own pane under the markers, so the outline never covers them. */}
+          <Pane name="outline" style={{ zIndex: 250 }}>
+          {outline && (
+            <GeoJSON
+              data={outline}
+              interactive={false}
+              style={{ color: '#B5B8BB', weight: 1, fillColor: '#FFFFFF', fillOpacity: 1 }}
+              attribution='Outline: <a href="https://www.naturalearthdata.com/">Natural Earth</a>'
+            />
+          )}
+          </Pane>
           {generators.map((g) => (
             <CircleMarker
               key={g.id}

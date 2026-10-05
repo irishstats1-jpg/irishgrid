@@ -6,13 +6,13 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 // Content Security Policy. Inline scripts/styles are needed by Next's
 // hydration payload and by Recharts/Leaflet; everything else is same-origin
-// except the map tiles (CARTO) and, if enabled, Plausible analytics.
+// except Plausible analytics, if enabled.
 const csp = (frameAncestors) =>
   [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://plausible.io`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://*.basemaps.cartocdn.com",
+    "img-src 'self' data: blob:",
     "font-src 'self' data:",
     `connect-src 'self' https://plausible.io${isDev ? ' ws:' : ''}`,
     "object-src 'none'",
