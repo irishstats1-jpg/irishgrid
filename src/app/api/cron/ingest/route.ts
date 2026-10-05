@@ -1,28 +1,9 @@
 import { NextResponse } from 'next/server';
-import { ALL_PERIODS, computePeriodMetrics, getBtcMarket, getSeries, refreshLiveData } from '@/lib/data/metrics';
+import { getAllYears, getBtcMarket, refreshLiveData } from '@/lib/data/metrics';
 
-// Daily milestone detection (§9): flag a new record-waste day so a social draft
-// can be created. Returns the milestone (in production it writes a social_posts
-// draft/trigger for Make).
-function detectMilestone() {
-  const series = getSeries();
-  if (series.length < 2) return null;
-  const today = series[series.length - 1];
-  const todayWasted = Math.max(0, today.windAvailableMwh - today.produced.wind);
-  const priorMax = Math.max(
-    ...series.slice(0, -1).map((d) => Math.max(0, d.windAvailableMwh - d.produced.wind)),
-  );
-  if (todayWasted > priorMax) {
-    return { type: 'record_waste_day', date: today.date, wastedMwh: Math.round(todayWasted) };
-  }
-  return null;
-}
-
-// Hourly ingestion + recompute (§9). Triggered by a Cloudflare Cron Trigger
-// hitting this endpoint with the MAKE_SOCIAL_WEBHOOK_SECRET (reused as a shared
-// secret). Idempotent: fetch market → (upsert snapshots) → recompute period
-// metrics. In production the recomputed metrics are upserted into period_metrics
-// and job_status is updated for the admin health widget.
+// Hourly refresh. Triggered by a Cloudflare Cron Trigger with CRON_SECRET (or
+// MAKE_SOCIAL_WEBHOOK_SECRET). Idempotent: refresh the market snapshot and the
+// annual series, recompute the annual figures, and report what was used.
 export const dynamic = 'force-dynamic';
 
 function authorized(request: Request): boolean {
@@ -47,26 +28,25 @@ async function runIngest(request: Request) {
   await refreshLiveData();
   const market = getBtcMarket();
 
-  // Recompute the live/rolling period metrics.
-  const recomputed = ALL_PERIODS.map((p) => {
-    const m = computePeriodMetrics(p);
-    return { period: p, wastedMwh: Math.round(m.wastedMwh), costEur: Math.round(m.costEur) };
-  });
-
-  // Daily run additionally runs milestone detection.
-  const milestone = job === 'daily' ? detectMilestone() : null;
-
-  // TODO (production): upsert generation_snapshots from fetchEirgridArea(...),
-  // upsert btc_market/wholesale_prices, upsert period_metrics, set job_status;
-  // if milestone, insert a social_posts draft for Make.
+  const recomputed = getAllYears().map((m) => ({
+    year: m.year,
+    method: m.method,
+    windGwh: Math.round(m.windMwh / 1000),
+    costCentralEur: Math.round(m.cost.central),
+    grossRevenueEur: Math.round(m.mining.revenue.revenueEur),
+  }));
 
   return NextResponse.json({
     ok: true,
     job,
     ranAt: new Date().toISOString(),
-    market: { priceEur: market.priceEur, networkHashrateThs: market.networkHashrateThs },
+    market: {
+      priceEur: market.priceEur,
+      networkHashrateThs: market.networkHashrateThs,
+      asOf: market.asOf,
+      live: market.live,
+    },
     recomputed,
-    milestone,
   });
 }
 

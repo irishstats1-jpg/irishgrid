@@ -1,71 +1,46 @@
-// Shared types for the Irish Grid methodology engine (§7).
+// Shared types for the Irish Grid methodology engine.
 
-export type FuelType =
-  | 'wind'
-  | 'solar'
-  | 'gas'
-  | 'hydro'
-  | 'coal'
-  | 'oil'
-  | 'other'
-  | 'imports';
+export type FuelType = 'wind' | 'solar' | 'gas' | 'hydro' | 'storage' | 'coal' | 'oil' | 'other' | 'imports';
 
-export type PeriodKey =
-  | 'yesterday'
-  | 'last_week'
-  | 'last_month'
-  | 'last_365'
-  | '2022'
-  | '2023'
-  | '2024'
-  | '2025';
+/** The site works in calendar years only ("2024"): every figure has a reported or provisional basis. */
+export type PeriodKey = `${number}`;
 
-/**
- * Mining + cost assumptions (§7.4). These live in the `assumptions` table and
- * are editable in /admin/assumptions — they are NEVER hard-coded into figures.
- * The values here are the transparent, documented defaults.
- */
+/** Technical mining assumptions (the revenue side). */
 export interface Assumptions {
-  /** ASIC efficiency, joules per terahash (S21-class ≈ 17.5 J/TH). */
+  /** ASIC efficiency, joules per terahash (Antminer S21-class ≈ 17.5 J/TH). */
   efficiencyJPerTh: number;
-  /** Interruptible-operation uptime factor (0–1). Curtailment is intermittent. */
-  uptimeFactor: number;
+  /**
+   * Share of the surplus energy a flexible fleet actually uses (0–1), allowing
+   * for ramping, maintenance and periods too short to be worth running.
+   */
+  captureFactor: number;
   /** Mining-pool fee (0–1). */
   poolFee: number;
-  /** Current block subsidy in BTC (3.125 post-April-2024 halving). */
-  blockRewardBtc: number;
-  /** Domestic electricity accounts — the headline "billpayer" denominator. */
-  nBillpayers: number;
-  /** Population — the "per person" denominator. */
-  nPeople: number;
-  /** Households denominator for the forecast per-household savings (§7.5). */
-  nHouseholds: number;
-  /** Proposal narrative only (§5.3): share of mined BTC sold monthly. */
-  sellShareMonthly: number;
 }
 
-/** Live-ish Bitcoin market + network state (cached hourly from APIs). */
+/** Bitcoin market and network state used for a calculation. */
 export interface BtcMarket {
   priceEur: number;
-  /** Total network hashrate in TH/s. */
+  /** Total network hashrate, TH/s. */
   networkHashrateThs: number;
-  /** Mining difficulty (informational; hashrate is used directly). */
   difficulty: number;
+  /** Block subsidy, BTC (transaction fees are excluded — conservative). */
   blockRewardBtc: number;
+  /** When the price/hashrate were taken (ISO). */
+  asOf: string;
+  /** False when live data was unavailable and fallback values are in use. */
+  live: boolean;
 }
 
-/** Result of the BTC-savings model, with every intermediate exposed (§7.3). */
-export interface BtcSavingsResult {
-  wastedMwh: number;
-  usableEnergyMwh: number;
-  usableEnergyKwh: number;
-  /** Effective fleet hashrate (TH/s) the usable energy could sustain. */
-  fleetHashrateThs: number;
+/** Gross mining revenue for a volume of surplus energy over a period. */
+export interface MiningRevenue {
+  energyMwh: number;
+  usedEnergyMwh: number;
+  /** Average fleet hashrate over the whole period, TH/s. */
+  averageHashrateThs: number;
   networkSharePct: number;
   blocksInPeriod: number;
-  btcMinedGross: number;
-  btcMinedNet: number;
-  valueEur: number;
-  savingPerBillpayerEur: number;
-  savingPerPersonEur: number;
+  btcGross: number;
+  btcNet: number;
+  revenueEur: number;
 }

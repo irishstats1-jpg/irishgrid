@@ -1,92 +1,54 @@
-import { getSeries, computePeriodMetrics, ALL_PERIODS, refreshLiveData } from '@/lib/data/metrics';
-import { DISPATCH_DOWN_ACTUALS } from '@/lib/data/dispatchDown';
-import { GENERATORS } from '@/lib/data/generators';
+import { refreshLiveData } from '@/lib/data/metrics';
+import { DATA_LICENCE, DATASET_ALIASES, DATASETS, toCsv } from '@/lib/data/datasets';
+import { METHOD_VERSION, SITE_URL } from '@/lib/site';
 
-// Public CSV export for researchers (§15). One endpoint per dataset.
+// Open data export: /api/data/<dataset> (CSV) or /api/data/<dataset>?format=json.
 export const revalidate = 3600;
 
-function toCsv(rows: Array<Record<string, unknown>>): string {
-  if (rows.length === 0) return '';
-  const headers = Object.keys(rows[0]);
-  const escape = (v: unknown) => {
-    const s = v === null || v === undefined ? '' : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  return [headers.join(','), ...rows.map((r) => headers.map((h) => escape(r[h])).join(','))].join('\n');
-}
-
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ dataset: string }> },
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ dataset: string }> }) {
   const { dataset } = await params;
-  await refreshLiveData();
-  let rows: Array<Record<string, unknown>> = [];
+  if (dataset === 'generation-snapshots') {
+    return new Response(
+      'This dataset was withdrawn in October 2026: it was modelled, not published data. See /data for the current datasets.',
+      { status: 410, headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
+    );
+  }
+  const slug = DATASET_ALIASES[dataset] ?? dataset;
+  const ds = DATASETS.find((d) => d.slug === slug);
+  if (!ds) return new Response('Unknown dataset', { status: 404 });
 
-  switch (dataset) {
-    case 'generation-snapshots':
-      rows = getSeries().map((d) => ({
-        date: d.date,
-        demand_mwh: d.demandMwh,
-        wind_available_mwh: d.windAvailableMwh,
-        wind_mwh: d.produced.wind,
-        solar_mwh: d.produced.solar,
-        gas_mwh: d.produced.gas,
-        hydro_mwh: d.produced.hydro,
-        imports_mwh: d.produced.imports,
-        other_mwh: d.produced.other,
-        wasted_mwh: Math.max(0, d.windAvailableMwh - d.produced.wind),
-      }));
-      break;
-    case 'dispatch-down-actuals':
-      rows = DISPATCH_DOWN_ACTUALS.map((a) => ({
-        year: a.year,
-        region: a.region,
-        total_gwh: a.gwh,
-        curtailment_gwh: a.curtailmentGwh,
-        constraint_gwh: a.constraintGwh,
-        wind_dispatch_down_pct: a.windDispatchDownPct,
-        source: a.source,
-      }));
-      break;
-    case 'period-metrics':
-      rows = ALL_PERIODS.map((p) => {
-        const m = computePeriodMetrics(p);
-        return {
-          period: p,
-          is_estimate: m.isEstimate,
-          produced_mwh: Math.round(m.producedMwh),
-          wasted_mwh: Math.round(m.wastedMwh),
-          cost_eur: Math.round(m.costEur),
-          cost_per_billpayer_eur: m.costPerBillpayerEur.toFixed(2),
-          btc_value_eur: Math.round(m.btcValueEur),
-          btc_mined_net: m.btcMinedNet.toFixed(3),
-          saving_per_billpayer_eur: m.savingPerBillpayerEur.toFixed(2),
-        };
-      });
-      break;
-    case 'generators':
-      rows = GENERATORS.map((g) => ({
-        id: g.id,
-        name: g.name,
-        fuel_type: g.fuelType,
-        capacity_mw: g.capacityMw,
-        operator: g.operator,
-        lat: g.lat,
-        lng: g.lng,
-        region: g.region,
-        is_major: g.isMajor,
-      }));
-      break;
-    default:
-      return new Response('Unknown dataset', { status: 404 });
+  await refreshLiveData();
+  const rows = ds.rows();
+  const format = new URL(request.url).searchParams.get('format');
+  const common = {
+    'Cache-Control': 'public, max-age=3600',
+    'Access-Control-Allow-Origin': '*',
+    Link: `<${DATA_LICENCE.url}>; rel="license"`,
+  };
+
+  if (format === 'json') {
+    return Response.json(
+      {
+        dataset: ds.slug,
+        title: ds.title,
+        description: ds.description,
+        basis: ds.basis,
+        methodVersion: METHOD_VERSION,
+        method: `${SITE_URL}/methodology`,
+        licence: DATA_LICENCE,
+        generatedAt: new Date().toISOString(),
+        columns: ds.columns,
+        rows,
+      },
+      { headers: common },
+    );
   }
 
-  return new Response(toCsv(rows), {
+  return new Response(toCsv(rows, ds.columns), {
     headers: {
+      ...common,
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="irishgrid-${dataset}.csv"`,
-      'Cache-Control': 'public, max-age=3600',
+      'Content-Disposition': `attachment; filename="irishgrid-${ds.slug}.csv"`,
     },
   });
 }

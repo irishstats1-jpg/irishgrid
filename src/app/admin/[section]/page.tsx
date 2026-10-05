@@ -24,7 +24,7 @@ const SECTIONS: Record<string, { title: string; desc: string; io: string }> = {
   },
   submissions: {
     title: 'Submissions inbox',
-    desc: 'Filter by type (policymaker/investor/pilot/volunteer); mark handled; CSV export.',
+    desc: 'Filter by type (policymaker/pilot/volunteer); mark handled; CSV export.',
     io: 'Reads submissions (Supabase). Fed by /api/submissions.',
   },
   pledges: {
@@ -39,8 +39,8 @@ const SECTIONS: Record<string, { title: string; desc: string; io: string }> = {
   },
   assumptions: {
     title: 'Assumptions & forecast config',
-    desc: 'Edit mining defaults, cost parameters and the per-billpayer/per-person/household denominators — figures recompute without a redeploy.',
-    io: 'Reads/writes assumptions + forecast_config. Defaults in src/lib/methodology/constants.ts.',
+    desc: 'Assumptions live in code so that every change is a reviewed, public commit and bumps the method version (src/lib/site.ts). The assumptions and forecast_config tables are read-only mirrors for the data exports.',
+    io: 'Defaults in src/lib/methodology (constants.ts, cost.ts, btc.ts, forecast.ts); households in src/lib/data/dispatchDown.ts.',
   },
   settings: {
     title: 'Settings',

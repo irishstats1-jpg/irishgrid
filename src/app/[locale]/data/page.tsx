@@ -1,40 +1,15 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { PageHeader, Section } from '@/components/ui';
+import { PageHeader, Section, BasisTag } from '@/components/ui';
+import { DATA_LICENCE, DATASETS } from '@/lib/data/datasets';
+import { METHOD_VERSION, REPO_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Data for researchers',
+  title: 'Data',
   description:
-    'Download the underlying data behind Irish Grid as CSV: generation snapshots, dispatch-down actuals, computed period metrics and the generator list, with a data dictionary.',
+    'Download the data behind Irish Grid as CSV or JSON: the annual wind dispatch-down series, the modelled cost and Bitcoin figures, every assumption, and the generator list — with a data dictionary. CC BY 4.0.',
 };
-
-const DATASETS = [
-  {
-    slug: 'generation-snapshots',
-    title: 'Generation snapshots',
-    desc: 'Daily fuel-mix, demand, available wind and modelled wasted energy.',
-    dict: ['date', 'demand_mwh', 'wind_available_mwh', '<fuel>_mwh', 'wasted_mwh'],
-  },
-  {
-    slug: 'dispatch-down-actuals',
-    title: 'Dispatch-down actuals',
-    desc: 'Official annual curtailment + constraint volumes (2022–2024).',
-    dict: ['year', 'total_gwh', 'curtailment_gwh', 'constraint_gwh', 'wind_dispatch_down_pct', 'source'],
-  },
-  {
-    slug: 'period-metrics',
-    title: 'Computed period metrics',
-    desc: 'Produced, wasted, cost and BTC-savings figures per duration.',
-    dict: ['period', 'is_estimate', 'produced_mwh', 'wasted_mwh', 'cost_eur', 'btc_value_eur', 'saving_per_billpayer_eur'],
-  },
-  {
-    slug: 'generators',
-    title: 'Generators',
-    desc: 'Curated generator list with fuel, capacity, operator and coordinates.',
-    dict: ['id', 'name', 'fuel_type', 'capacity_mw', 'operator', 'lat', 'lng', 'is_major'],
-  },
-];
 
 export default async function DataPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -43,29 +18,51 @@ export default async function DataPage({ params }: { params: Promise<{ locale: s
     <>
       <PageHeader
         eyebrow="Open data"
-        title="Data for researchers"
+        title="The data, to check and reuse"
         intro={
           <>
-            Everything on Irish Grid is built on public data. Download the underlying series as CSV. Short-period
-            figures are modelled estimates; annual figures use official actuals — see the{' '}
-            <Link href="/about" className="font-medium text-green-700 underline">Methodology</Link>.
+            Every figure on the site comes from the datasets below. Reported volumes are from EirGrid and SONI;
+            everything else is modelled with the assumptions on the{' '}
+            <Link href="/methodology" className="link">method page</Link> (version {METHOD_VERSION}). Free to reuse under{' '}
+            <a href={DATA_LICENCE.url} target="_blank" rel="noopener noreferrer" className="link">{DATA_LICENCE.name}</a>{' '}
+            — please credit &ldquo;{DATA_LICENCE.attribution}&rdquo;.
           </>
         }
       />
       <Section>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
           {DATASETS.map((d) => (
             <div key={d.slug} className="card">
-              <h3 className="font-semibold text-ink">{d.title}</h3>
-              <p className="prose-body mt-1">{d.desc}</p>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-ink-500">Columns</p>
-              <p className="mt-1 font-mono text-xs text-ink-700">{d.dict.join(' · ')}</p>
-              <a href={`/api/data/${d.slug}`} className="btn-primary mt-4" download>
-                Download CSV
-              </a>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[24px]">{d.title}</h2>
+                  <p className="prose-body mt-1 max-w-3xl">{d.description}</p>
+                </div>
+                <BasisTag kind="method">{d.basis}</BasisTag>
+              </div>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm font-medium text-green-700">Data dictionary ({d.columns.length} columns)</summary>
+                <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm md:grid-cols-[max-content_1fr]">
+                  {d.columns.map((c) => (
+                    <div key={c.name} className="contents">
+                      <dt className="font-mono text-[13px] text-ink">{c.name}</dt>
+                      <dd className="text-ink-600">{c.description}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <a href={`/api/data/${d.slug}`} className="btn-primary" download>Download CSV</a>
+                <a href={`/api/data/${d.slug}?format=json`} className="btn-outline" target="_blank" rel="noopener noreferrer">JSON</a>
+              </div>
             </div>
           ))}
         </div>
+        <p className="prose-body mt-6 max-w-3xl text-sm">
+          The code that produces these files is public on{' '}
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="link">GitHub</a>. Reported figures are
+          changed only by a public code change, so their history is visible there.
+        </p>
       </Section>
     </>
   );

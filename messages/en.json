@@ -1,53 +1,44 @@
 {
   "brand": {
     "name": "Irish Grid",
-    "tagline": "Waste less. Pay less. Build more clean energy.",
-    "independence": "Independent. No connection to EirGrid or SONI.",
-    "wordmark": "IRISH GRID"
+    "tagline": "Ireland is paying for clean power it doesn't use.",
+    "independence": "Irish Grid is an independent, non-partisan research and advocacy site. It has no connection to EirGrid or SONI.",
+    "wordmark": "Irish Grid",
+    "descriptor": "Independent evidence on Ireland's electricity grid"
   },
   "nav": {
-    "home": "The Problem",
+    "home": "The problem",
     "curtailment": "Curtailment payments",
-    "proposal": "The Solution",
+    "proposal": "The policy option",
     "forecast": "Forecast",
     "getInvolved": "Get Involved",
     "blog": "Blog",
-    "about": "About & Methodology",
+    "about": "About",
     "press": "Press",
     "pledge": "Pledge",
     "data": "Data",
-    "bitcoin": "The Bitcoin Network"
+    "bitcoin": "The flexible load",
+    "methodology": "Method",
+    "briefs": "Briefs"
   },
   "common": {
     "estimate": "Modelled",
     "actual": "Reported",
     "notFinancialAdvice": "Not financial or investment advice.",
-    "perBillpayer": "per billpayer",
-    "perPerson": "per person",
     "learnMore": "Learn more",
     "readMethodology": "Read the methodology",
     "loading": "Loading…"
   },
-  "durations": {
-    "yesterday": "Yesterday",
-    "last_week": "Last week",
-    "last_month": "Last month",
-    "last_365": "Last 365 days",
-    "2025": "2025",
-    "2024": "2024",
-    "2023": "2023",
-    "2022": "2022"
-  },
   "footer": {
     "independenceTitle": "Independent",
-    "independenceBody": "Irish Grid is an independent site. It has no connection to EirGrid or SONI.",
+    "independenceBody": "Irish Grid is an independent, non-partisan research and advocacy site. It has no connection to EirGrid or SONI.",
     "financialTitle": "† Bitcoin figures",
-    "financialBody": "Illustrative estimate at the BTC price and network difficulty on the date shown. Not financial advice.",
-    "estimatesTitle": "No number without its basis",
-    "estimatesBody": "Every figure carries its period and source. Annual volumes are reported in EirGrid's Constraint & Curtailment reports; short periods and all costs are modelled (≈).",
+    "financialBody": "Modelled gross revenue at the BTC price and network hashrate on the date shown, before costs. Not financial advice.",
+    "estimatesTitle": "Every figure has its basis",
+    "estimatesBody": "Each figure shows its period and source. Volumes are reported in EirGrid and SONI's annual Constraint and Curtailment reports; costs and Bitcoin figures are modelled (≈) with published assumptions.",
     "sourcesTitle": "Data sources",
     "contactTitle": "Contact",
-    "rights": "© {year} Irish Grid. Built on public data.",
-    "independenceLine": "Independent. No connection to EirGrid or SONI."
+    "rights": "© {year} Irish Grid. Data CC BY 4.0.",
+    "independenceLine": "Irish Grid is an independent, non-partisan research and advocacy site. It has no connection to EirGrid or SONI."
   }
 }

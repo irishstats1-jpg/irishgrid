@@ -1,12 +1,15 @@
-import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
-import { DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET } from '@/lib/methodology';
-import { eur, energy, num, btc } from '@/lib/format';
+import { getBtcMarket, getHeadlineYear, refreshLiveData } from '@/lib/data/metrics';
+import { DEFAULT_ASSUMPTIONS } from '@/lib/methodology';
+import { HOUSEHOLDS } from '@/lib/data/dispatchDown';
+import { asOfDate } from '@/lib/basis';
+import { eur, eurModel, eurRange, gwh, num, btc } from '@/lib/format';
+import { METHOD_VERSION } from '@/lib/site';
 import { requireAdmin } from '@/lib/adminAuth';
 import { LogoutButton } from '@/components/LogoutButton';
 
 export const dynamic = 'force-dynamic';
 
-function health() {
+function health(marketLive: boolean) {
   const supa = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
   const resend = Boolean(process.env.RESEND_API_KEY && process.env.CONTACT_NOTIFY_EMAIL);
   const openai = Boolean(process.env.OPENAI_API_KEY);
@@ -14,16 +17,17 @@ function health() {
     { name: 'Supabase (DB + Auth)', ok: supa },
     { name: 'Resend (email)', ok: resend },
     { name: 'OpenAI (drafting/translation)', ok: openai },
-    { name: 'EirGrid ingestion (cron)', ok: false, note: 'Wire hourly Cloudflare cron' },
-    { name: 'BTC market feed', ok: true, note: 'Fallback snapshot active' },
+    { name: 'Cron secret', ok: Boolean(process.env.CRON_SECRET || process.env.MAKE_SOCIAL_WEBHOOK_SECRET), note: 'Set CRON_SECRET and add the cron trigger in Cloudflare' },
+    { name: 'BTC market feed', ok: marketLive, note: 'Stored snapshot in use — CoinGecko/mempool unreachable' },
   ];
 }
 
 export default async function AdminDashboard() {
   const { configured, email } = await requireAdmin();
   await refreshLiveData();
-  const m = computePeriodMetrics('last_365');
-  const checks = health();
+  const m = getHeadlineYear();
+  const market = getBtcMarket();
+  const checks = health(market.live);
 
   return (
     <div className="space-y-8">
@@ -57,20 +61,20 @@ export default async function AdminDashboard() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-semibold text-ink">Latest headline figures (last 365 days)</h2>
+        <h2 className="mb-3 font-semibold text-ink">Headline figures ({m.year}, {m.method})</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Fig label="Wasted energy" value={energy(m.wastedMwh)} />
-          <Fig label="Cost to billpayers" value={eur(m.costEur, { compact: true })} />
-          <Fig label="BTC value if mined" value={eur(m.btcValueEur, { compact: true })} />
-          <Fig label="BTC mined (net)" value={btc(m.btcMinedNet)} />
+          <Fig label="Wind dispatch-down" value={gwh(m.windMwh)} />
+          <Fig label={`Compensation, modelled (${eurRange(m.cost.low, m.cost.high)})`} value={`≈ ${eurModel(m.cost.central)}`} />
+          <Fig label="Gross mining revenue" value={`≈ ${eurModel(m.mining.revenue.revenueEur)}`} />
+          <Fig label="BTC a year (net of pool fee)" value={btc(m.mining.revenue.btcNet)} />
         </div>
       </section>
 
       <section>
         <h2 className="mb-3 font-semibold text-ink">Assumptions in effect</h2>
         <div className="rounded-sm border border-ink-200 bg-white p-4 text-sm">
-          <p>Efficiency {DEFAULT_ASSUMPTIONS.efficiencyJPerTh} J/TH · Uptime {Math.round(DEFAULT_ASSUMPTIONS.uptimeFactor * 100)}% · Pool fee {DEFAULT_ASSUMPTIONS.poolFee * 100}% · Reward {DEFAULT_ASSUMPTIONS.blockRewardBtc} BTC</p>
-          <p className="mt-1 text-ink-500">Billpayers {num(DEFAULT_ASSUMPTIONS.nBillpayers)} · BTC price {eur(FALLBACK_BTC_MARKET.priceEur, { compact: true })} (edit under Assumptions)</p>
+          <p>Method {METHOD_VERSION} · Efficiency {DEFAULT_ASSUMPTIONS.efficiencyJPerTh} J/TH · Capture {Math.round(DEFAULT_ASSUMPTIONS.captureFactor * 100)}% · Pool fee {DEFAULT_ASSUMPTIONS.poolFee * 100}% · Subsidy {market.blockRewardBtc} BTC</p>
+          <p className="mt-1 text-ink-500">Households {num(HOUSEHOLDS.count)} · BTC price {eur(market.priceEur, { decimals: 0 })} on {asOfDate(market.asOf)} ({market.live ? 'live' : 'stored snapshot'})</p>
         </div>
       </section>
     </div>

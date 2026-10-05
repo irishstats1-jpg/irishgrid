@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  computeForecast,
-  interpolateCapacity,
-  curtailmentRate,
-  DEFAULT_FORECAST_CONFIG,
-} from './forecast';
+import { computeForecast, dispatchDownRate, interpolateCapacity, DEFAULT_FORECAST_CONFIG } from './forecast';
 import { DEFAULT_ASSUMPTIONS, FALLBACK_BTC_MARKET } from './constants';
 
 const A = { ...DEFAULT_ASSUMPTIONS };
@@ -12,13 +7,8 @@ const M = { ...FALLBACK_BTC_MARKET };
 const CFG = { ...DEFAULT_FORECAST_CONFIG };
 
 describe('interpolateCapacity', () => {
-  it('returns anchor values exactly at anchor years', () => {
+  it('returns anchor values at anchor years and interpolates between them', () => {
     expect(interpolateCapacity(CFG.capacityAnchors, 2030)).toBe(22);
-    expect(interpolateCapacity(CFG.capacityAnchors, 2040)).toBe(43);
-  });
-
-  it('interpolates linearly between anchors', () => {
-    // Halfway 2030(22)→2040(43) at 2035 → 32.5.
     expect(interpolateCapacity(CFG.capacityAnchors, 2035)).toBeCloseTo(32.5, 6);
   });
 
@@ -28,50 +18,51 @@ describe('interpolateCapacity', () => {
   });
 });
 
-describe('curtailmentRate', () => {
-  it('equals the base rate at the reference capacity', () => {
-    expect(curtailmentRate(CFG.curtailmentRefCapacityGw, CFG)).toBeCloseTo(CFG.curtailmentBaseRate, 6);
+describe('dispatchDownRate', () => {
+  it('equals the reported base rate at the reference capacity', () => {
+    expect(dispatchDownRate(CFG.curtailmentRefCapacityGw, CFG)).toBeCloseTo(CFG.dispatchDownBaseRate, 6);
   });
 
   it('rises with capacity but is capped', () => {
-    expect(curtailmentRate(100, CFG)).toBe(CFG.curtailmentMaxRate);
-    expect(curtailmentRate(20, CFG)).toBeGreaterThan(CFG.curtailmentBaseRate);
+    expect(dispatchDownRate(20, CFG)).toBeGreaterThan(CFG.dispatchDownBaseRate);
+    expect(dispatchDownRate(1000, CFG)).toBe(CFG.dispatchDownMaxRate);
   });
 });
 
 describe('computeForecast', () => {
-  it('produces one point per year across the horizon', () => {
+  it('produces one point per year', () => {
     const pts = computeForecast('bau', CFG, A, M);
     expect(pts).toHaveLength(CFG.endYear - CFG.startYear + 1);
     expect(pts[0].year).toBe(CFG.startYear);
-    expect(pts[pts.length - 1].year).toBe(CFG.endYear);
   });
 
-  it('BAU recovers nothing; with_mining recovers a positive share', () => {
+  it('business as usual uses nothing; flexible demand uses the configured share', () => {
     const bau = computeForecast('bau', CFG, A, M);
-    const mining = computeForecast('with_mining', CFG, A, M);
-    expect(bau[10].recoveredGwh).toBe(0);
-    expect(bau[10].savingPerHouseholdEur).toBe(0);
-    expect(mining[10].recoveredGwh).toBeGreaterThan(0);
-    expect(mining[10].savingPerHouseholdEur).toBeGreaterThan(0);
+    const flex = computeForecast('with_flexible_demand', CFG, A, M);
+    expect(bau[5].absorbedGwh).toBe(0);
+    expect(bau[5].grossRevenueEur).toBe(0);
+    expect(flex[5].absorbedGwh).toBeCloseTo(flex[5].dispatchDownGwh * CFG.flexibleAbsorbedShare, 4);
   });
 
-  it('curtailment volume grows over the horizon (problem scales with capacity)', () => {
-    const pts = computeForecast('bau', CFG, A, M);
-    expect(pts[pts.length - 1].curtailmentGwh).toBeGreaterThan(pts[0].curtailmentGwh);
+  it('halvings cut the block subsidy', () => {
+    const pts = computeForecast('with_flexible_demand', CFG, A, M);
+    const y2027 = pts.find((p) => p.year === 2027)!;
+    const y2029 = pts.find((p) => p.year === 2029)!;
+    expect(y2029.blockRewardBtc).toBeCloseTo(y2027.blockRewardBtc / 2, 6);
   });
 
-  it('recovered energy is the configured share of curtailment', () => {
-    const pts = computeForecast('with_mining', CFG, A, M);
-    const p = pts[5];
-    expect(p.recoveredGwh).toBeCloseTo(p.curtailmentGwh * CFG.miningAbsorbedShare, 4);
+  it('with flat price and growing network, revenue per GWh falls over time', () => {
+    const pts = computeForecast('with_flexible_demand', CFG, A, M);
+    const first = pts[0].grossRevenueEur / pts[0].absorbedGwh;
+    const last = pts[pts.length - 1].grossRevenueEur / pts[pts.length - 1].absorbedGwh;
+    expect(last).toBeLessThan(first);
   });
 
-  it('a faster pathway builds more capacity and more curtailment', () => {
+  it('a faster pathway builds more capacity and more dispatch-down', () => {
     const slow = computeForecast('bau', { ...CFG, pathwayMultiplier: 0.7 }, A, M);
     const fast = computeForecast('bau', { ...CFG, pathwayMultiplier: 1.3 }, A, M);
-    const last = slow.length - 1;
-    expect(fast[last].renewableCapacityGw).toBeGreaterThan(slow[last].renewableCapacityGw);
-    expect(fast[last].curtailmentGwh).toBeGreaterThan(slow[last].curtailmentGwh);
+    const i = slow.length - 1;
+    expect(fast[i].renewableCapacityGw).toBeGreaterThan(slow[i].renewableCapacityGw);
+    expect(fast[i].dispatchDownGwh).toBeGreaterThan(slow[i].dispatchDownGwh);
   });
 });

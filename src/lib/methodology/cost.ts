@@ -1,93 +1,72 @@
-// Cost-to-billpayers model (§7.2). The headline cost is modelled as the
-// compensation / constraint payments made to generators for dispatched-down
-// energy — NOT a naïve (volume × price) multiply.
+// Cost of dispatch-down to billpayers — a MODEL, shown with a range.
 //
-// Nuance surfaced on the Methodology page: system-wide *curtailment* is often
-// UNcompensated for newer (non-priority-dispatch) generators, whereas local
-// *constraints* are generally compensated. So we show both the wasted VOLUME
-// and the compensated-COST portion, and the two are computed differently.
+// Compensation: generators with firm access are generally paid when they are
+// constrained (a local network limit); system-wide curtailment is largely
+// uncompensated for newer generators. So the compensated volume depends on the
+// curtailment/constraint split, which the annual reports give for some years.
+// Every rate below is an Irish Grid assumption, shown on the methodology page.
 
 export interface CostAssumptions {
-  /** Payment rate for compensated dispatch-down, €/MWh (≈ wholesale reference). */
-  compensationPriceEurPerMwh: number;
-  /** Share of curtailment volume that is compensated (low — many newer gens are not). */
+  /** Compensation paid per MWh of compensated dispatch-down, €. */
+  compensationEurPerMwh: number;
+  /** Share of curtailed (system-wide) energy that is compensated, 0–1. */
   compensatedShareCurtailment: number;
-  /** Share of constraint volume that is compensated (high — generally paid). */
+  /** Share of constrained (local) energy that is compensated, 0–1. */
   compensatedShareConstraint: number;
-  /** Blended compensated share used when only a total (no split) is known. */
-  compensatedShareBlended: number;
+  /** Constraint share used when a year's split isn't reported, 0–1. */
+  defaultConstraintShare: number;
 }
 
-export const DEFAULT_COST_ASSUMPTIONS: CostAssumptions = {
-  compensationPriceEurPerMwh: 75,
-  compensatedShareCurtailment: 0.2,
-  compensatedShareConstraint: 0.95,
-  compensatedShareBlended: 0.55,
+export const COST_CASES: Record<'low' | 'central' | 'high', CostAssumptions> = {
+  low: { compensationEurPerMwh: 55, compensatedShareCurtailment: 0, compensatedShareConstraint: 0.8, defaultConstraintShare: 0.35 },
+  central: { compensationEurPerMwh: 75, compensatedShareCurtailment: 0.2, compensatedShareConstraint: 0.95, defaultConstraintShare: 0.5 },
+  high: { compensationEurPerMwh: 95, compensatedShareCurtailment: 0.4, compensatedShareConstraint: 1, defaultConstraintShare: 0.6 },
 };
 
-/**
- * Secondary "replacement cost" context (§7.2): when curtailed renewables are
- * replaced by burning gas, the system pays roughly the wholesale price for that
- * energy on top of the emissions. This is supporting context, clearly separated
- * from the headline compensation cost — NOT added to it.
- */
-export function computeReplacementCost(wastedMwh: number, wholesalePriceEurPerMwh: number): number {
-  return Math.max(0, wastedMwh) * Math.max(0, wholesalePriceEurPerMwh);
-}
-
-/** Reference wholesale price (€/MWh) until a live SEMOpx feed is wired (§20). */
+/** Reference wholesale price used for the replacement-cost context, €/MWh (Irish Grid assumption). */
 export const WHOLESALE_REF_EUR_PER_MWH = 95;
 
 export interface CostResult {
-  totalWastedMwh: number;
-  /** Volume that attracts a compensation payment, MWh. */
+  constraintShare: number;
+  constraintMwh: number;
+  curtailmentMwh: number;
   compensatedMwh: number;
-  /** Modelled headline cost to billpayers, €. */
   costEur: number;
-  costPerBillpayerEur: number;
-  costPerPersonEur: number;
 }
 
-export interface DispatchDownVolumes {
-  /** Total dispatch-down, MWh. */
-  totalMwh: number;
-  /** Curtailment portion, MWh (optional — only annual actuals split this out). */
-  curtailmentMwh?: number;
-  /** Constraint portion, MWh (optional). */
-  constraintMwh?: number;
+export function computeCost(totalMwh: number, constraintShare: number | null, a: CostAssumptions): CostResult {
+  const total = Math.max(0, totalMwh);
+  const share = clamp01(constraintShare ?? a.defaultConstraintShare);
+  const constraintMwh = total * share;
+  const curtailmentMwh = total - constraintMwh;
+  const compensatedMwh = curtailmentMwh * a.compensatedShareCurtailment + constraintMwh * a.compensatedShareConstraint;
+  return { constraintShare: share, constraintMwh, curtailmentMwh, compensatedMwh, costEur: compensatedMwh * a.compensationEurPerMwh };
 }
 
-export function computeCost(
-  volumes: DispatchDownVolumes,
-  cost: CostAssumptions,
-  denominators: { nBillpayers: number; nPeople: number },
-): CostResult {
-  const total = Math.max(0, volumes.totalMwh);
+export interface CostRange {
+  low: number;
+  central: number;
+  high: number;
+}
 
-  let compensatedMwh: number;
-  const hasSplit =
-    typeof volumes.curtailmentMwh === 'number' && typeof volumes.constraintMwh === 'number';
-
-  if (hasSplit) {
-    // Curtailment and constraint are compensated at very different rates.
-    compensatedMwh =
-      Math.max(0, volumes.curtailmentMwh!) * cost.compensatedShareCurtailment +
-      Math.max(0, volumes.constraintMwh!) * cost.compensatedShareConstraint;
-  } else {
-    // No split available (e.g. short-period estimates) → blended share.
-    compensatedMwh = total * cost.compensatedShareBlended;
-  }
-
-  const costEur = compensatedMwh * cost.compensationPriceEurPerMwh;
-  const costPerBillpayerEur =
-    denominators.nBillpayers > 0 ? costEur / denominators.nBillpayers : 0;
-  const costPerPersonEur = denominators.nPeople > 0 ? costEur / denominators.nPeople : 0;
-
+/** Low / central / high modelled compensation for a year's dispatch-down. */
+export function computeCostRange(totalMwh: number, constraintShare: number | null): CostRange {
   return {
-    totalWastedMwh: total,
-    compensatedMwh,
-    costEur,
-    costPerBillpayerEur,
-    costPerPersonEur,
+    low: computeCost(totalMwh, constraintShare, COST_CASES.low).costEur,
+    central: computeCost(totalMwh, constraintShare, COST_CASES.central).costEur,
+    high: computeCost(totalMwh, constraintShare, COST_CASES.high).costEur,
   };
+}
+
+/**
+ * Context only, never added to the headline: when a CONSTRAINED generator is
+ * turned down, other plant (often gas) is turned up elsewhere to meet demand.
+ * Curtailed energy is not replaced — it couldn't be used in the first place.
+ */
+export function computeReplacementCost(constraintMwh: number, wholesaleEurPerMwh: number): number {
+  return Math.max(0, constraintMwh) * Math.max(0, wholesaleEurPerMwh);
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v));
 }

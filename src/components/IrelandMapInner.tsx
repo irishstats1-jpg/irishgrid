@@ -5,12 +5,8 @@ import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from 'react-lea
 import { useMemo } from 'react';
 import type { Generator } from '@/lib/data/generators';
 import { FUEL_COLORS, FUEL_LABELS } from '@/lib/data/generators';
-import { energy } from '@/lib/format';
 
-export interface MapGenerator extends Generator {
-  modelledOutputMwh?: number;
-  attributableWastedMwh?: number;
-}
+export type MapGenerator = Generator;
 
 function radiusFor(capacityMw: number): number {
   return Math.max(5, Math.min(20, Math.sqrt(capacityMw) / 2.1));
@@ -85,19 +81,8 @@ export default function IrelandMapInner({
                     <div className="flex justify-between gap-4"><dt>Capacity</dt><dd>{g.capacityMw} MW</dd></div>
                     <div className="flex justify-between gap-4"><dt>Operator</dt><dd className="text-right">{g.operator}</dd></div>
                     <div className="flex justify-between gap-4"><dt>Location</dt><dd className="text-right">{g.region}</dd></div>
-                    {typeof g.modelledOutputMwh === 'number' && (
-                      <div className="flex justify-between gap-4">
-                        <dt>Output <span className="text-ink-500">(est.)</span></dt>
-                        <dd>{energy(g.modelledOutputMwh)}</dd>
-                      </div>
-                    )}
-                    {typeof g.attributableWastedMwh === 'number' && g.attributableWastedMwh > 0 && (
-                      <div className="flex justify-between gap-4">
-                        <dt>Wasted <span className="text-ink-500">(est.)</span></dt>
-                        <dd>{energy(g.attributableWastedMwh)}</dd>
-                      </div>
-                    )}
                   </dl>
+                  {g.note && <p className="mt-1.5 text-xs text-ink-600">{g.note}</p>}
                 </div>
               </Popup>
             </CircleMarker>
@@ -105,8 +90,9 @@ export default function IrelandMapInner({
         </MapContainer>
       </div>
       <p className="mt-2 text-xs text-ink-500">
-        EirGrid publishes live fuel mix at system level, not per plant. Per-plant output shown here is an
-        estimate. Coordinates/capacities are a curated seed set (EirGrid connected-generators list + OSM).
+        A partial, curated list of large generators and interconnectors — location, fuel and capacity only, last
+        reviewed October 2026. Ireland has several hundred wind farms; most are not shown. Coordinates are
+        approximate.
       </p>
     </div>
   );

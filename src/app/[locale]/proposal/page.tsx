@@ -3,35 +3,99 @@ import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation';
 import { PageHeader, Section, Callout, NotFinancialAdvice, PairedFigure } from '@/components/ui';
 import { ForecastExplorer } from '@/components/ForecastExplorer';
-import { DEFAULT_ASSUMPTIONS } from '@/lib/methodology';
-import { computePeriodMetrics, getBtcMarket, refreshLiveData } from '@/lib/data/metrics';
-import { asOfDate, btcTags, costTags } from '@/lib/basis';
-import { eur } from '@/lib/format';
+import { MiningCalculator } from '@/components/MiningCalculator';
+import { getBtcMarket, getHeadlineYear, refreshLiveData } from '@/lib/data/metrics';
+import { DEFAULT_MINING_COSTS } from '@/lib/methodology';
+import { asOfDate, btcFigure, btcTags, costTags } from '@/lib/basis';
+import { eurModel, eurRange, gwh, num, pct } from '@/lib/format';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'The proposal — flexible Bitcoin mining as interruptible grid load',
+  title: 'The policy option — using Ireland’s surplus wind',
   description:
-    'A clearly-labelled proposal: site modular, interruptible Bitcoin-mining units next to renewables so they consume only otherwise-curtailed energy — improving renewable economics and lowering bills, with no new fossil demand. Objections answered.',
+    'Three policy options to let flexible, interruptible demand use wind power Ireland currently turns away — with the costs, the break-even price, and how flexible mining compares with the alternatives.',
 };
+
+const OPTIONS = [
+  {
+    id: 'A',
+    t: 'Publish dispatch-down data by node and hour',
+    b: 'EirGrid publishes annual totals. Hourly figures by grid location would show investors — of any flexible load, from batteries to electrolysers to mining — where and when the surplus occurs, and let the public check the cost.',
+  },
+  {
+    id: 'B',
+    t: 'Define interruptible flexible demand in connection policy',
+    b: 'Create a connection category for demand that agrees to run only when the system has surplus and to stop on instruction, with faster, cheaper connections in return. Loads that cannot meet the terms do not qualify.',
+  },
+  {
+    id: 'C',
+    t: 'Pilot co-location at a constrained renewable site',
+    b: 'A time-limited pilot behind the meter at a wind farm with high constraint, privately funded, with published data on hours run, energy used, response times and the effect on compensation.',
+  },
+];
+
+const ALTERNATIVES = [
+  {
+    name: 'Grid reinforcement',
+    does: 'Removes constraints at the source',
+    time: 'Years to a decade',
+    pays: 'Billpayers, through network tariffs',
+    limits: 'Slow to plan and build; does not remove system-wide curtailment',
+  },
+  {
+    name: 'Batteries',
+    does: 'Shifts surplus by a few hours',
+    time: '1–2 years',
+    pays: 'Developers, recovered through markets and capacity payments',
+    limits: 'Hours, not days — long windy spells overwhelm them',
+  },
+  {
+    name: 'Interconnectors',
+    does: 'Exports surplus to Britain and France',
+    time: 'Years',
+    pays: 'Billpayers and developers',
+    limits: 'Neighbouring grids are often windy at the same time',
+  },
+  {
+    name: 'Electrolysers (hydrogen)',
+    does: 'Turns surplus into hydrogen',
+    time: 'Years; early stage in Ireland',
+    pays: 'Developers, often with public support',
+    limits: 'Low round-trip efficiency; needs hydrogen users and storage',
+  },
+  {
+    name: 'Heat and demand response',
+    does: 'Moves existing demand into windy hours',
+    time: 'Months to years',
+    pays: 'Customers and suppliers',
+    limits: 'Limited by how much demand can move',
+  },
+  {
+    name: 'Flexible mining',
+    does: 'Adds demand that runs only on surplus',
+    time: 'Months',
+    pays: 'Private investors',
+    limits: 'Volatile revenue; hardware waste; noise; needs connection rules',
+  },
+];
 
 const OBJECTIONS = [
   {
     q: '“Bitcoin mining wastes energy.”',
-    a: 'This proposal uses only energy that is already being wasted — clean electricity that has been generated and would otherwise be curtailed and thrown away. It adds no new demand on the system; it captures value from spillage.',
+    a: 'The option here uses only power that is already being turned away. If the rules allow it to run at any other time, it would add demand like any other load — which is why option B makes interruptibility a condition of connection.',
   },
   {
     q: '“It will raise emissions.”',
-    a: 'The load runs on surplus renewable output, not gas. Because it is interruptible, it switches off the moment the grid needs power, so it never causes extra fossil generation. By improving renewable project economics it helps displace gas over time.',
+    a: 'Not if it runs only on surplus wind and stops when the system needs the power: at those moments the extra demand is met by wind that would otherwise be turned down. Enforcement is the point of options B and C.',
   },
   {
-    q: '“It competes with homes and industry.”',
-    a: 'It cannot. The units are a buyer of last resort with rapid, automatic shut-off tied to grid signals: whenever the power is needed by consumers or the wholesale price rises, the miners stop within seconds. They only run when energy would otherwise be dumped.',
+    q: '“It will compete with homes and industry.”',
+    a: 'A load that must stop on instruction cannot take power others need. The test is whether the instruction is followed, quickly and every time — something a pilot can measure.',
   },
   {
-    q: '“Bitcoin’s price is volatile.”',
-    a: 'True — which is why figures on this site are illustrative and never presented as guaranteed. The 50/50 sell-and-hold policy funds operations from monthly sales while retaining upside, and the core benefit (soaking up curtailment and improving renewable economics) holds even under conservative price assumptions.',
+    q: '“It doesn’t make money.”',
+    a: 'At today’s price, under our central assumptions, a fleet that runs only on surplus does not cover its costs (see above). That is for investors to judge; the policy options cost the public nothing either way.',
   },
 ];
 
@@ -39,126 +103,150 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   setRequestLocale(locale);
   await refreshLiveData();
-  const y = computePeriodMetrics('2025');
+  const y = getHeadlineYear();
   const market = getBtcMarket();
-  const n = DEFAULT_ASSUMPTIONS.nHouseholds;
+  const asOf = asOfDate(market.asOf);
+  const e = y.mining;
+
   return (
     <>
       <PageHeader
-        eyebrow="Step 03 · An Réiteach · The solution — a clearly-labelled proposal"
+        eyebrow="03 · An Réiteach — The policy option"
         step={3}
-        title="Put the tool to work on the problem"
+        title="Let flexible demand use the surplus"
         intro={
           <>
-            <strong>Step 1</strong> showed the problem: clean energy Ireland throws away and pays for.{' '}
-            <strong>Step 2</strong> showed the tool: a flexible, interruptible, always-on energy buyer that
-            can sit anywhere and needs no subsidy. The solution is simply to <strong>point one at the
-            other</strong> — site modular Bitcoin-mining units next to renewables so they consume{' '}
-            <strong>only otherwise-curtailed output</strong>, switching off the instant the grid needs the
-            power. This section is a clearly-labelled <strong>advocacy proposal</strong>, kept separate from
-            the neutral data pages.
+            Step 01 showed the power Ireland turns away and what it is likely to cost. Step 02 showed one load that can
+            take power when it is spare and stop in seconds. This page sets out what that load would earn and cost,
+            how it compares with the alternatives, and three policy options that would help any flexible load use the
+            surplus. It is advocacy, kept separate from the evidence on the other pages.
           </>
         }
       />
 
-      <Section title="The case — whatever your politics">
-        <p className="prose-body max-w-3xl">
-          Ireland&apos;s renewable rollout is being held back by its own success: the more wind we build,
-          the more we curtail, and curtailment undermines the economics of new projects. A flexible load
-          that pays for otherwise-wasted energy fixes that from every angle at once.
-        </p>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <Section title="Why it matters, whatever your priority">
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="card">
-            <h3 className="font-semibold text-ink">For households</h3>
+            <h3 className="font-semibold text-ink">Bills</h3>
             <p className="prose-body mt-2 text-sm">
-              Revenue from rescued energy can offset the curtailment and constraint payments that currently
-              sit on every bill — putting downward pressure on what you pay.
+              Every megawatt-hour used instead of turned away is one that may not need compensating — and those
+              payments reach every bill.
             </p>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-ink">For the climate</h3>
+            <h3 className="font-semibold text-ink">Climate</h3>
             <p className="prose-body mt-2 text-sm">
-              Better project economics means more wind and solar actually get built, and none of this load
-              runs on gas — so it never adds fossil demand. It helps the transition, not hinders it.
+              Wind farms that can sell power they now lose are easier to finance, which helps the build-out the 2030
+              targets depend on.
             </p>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-ink">For the taxpayer</h3>
+            <h3 className="font-semibold text-ink">Public money</h3>
             <p className="prose-body mt-2 text-sm">
-              It is private capital, not public subsidy. It strengthens domestic energy independence and
-              competes with no home or business for power — it only ever buys the surplus.
+              None of the options needs a subsidy, levy or guarantee. Private investors would carry the risk.
             </p>
           </div>
         </div>
       </Section>
 
-      <Section title="The fix in one frame">
+      <Section title="The problem and the counterpart">
         <PairedFigure
           green={{
-            label: 'Paid out for switched-off energy · per household',
-            value: `≈ ${eur(y.costEur / n)}`,
-            gloss: `≈ ${eur(y.costEur, { compact: true })} in compensation across Irish homes`,
+            label: 'Compensation for turned-away wind',
+            value: `≈ ${eurModel(y.cost.central)}`,
+            gloss: `Modelled range ${eurRange(y.cost.low, y.cost.high)} for ${gwh(y.windMwh)} in ${y.year} — ≈ ${eurModel(y.costPerHousehold.central)} per household`,
             tags: costTags(y),
           }}
           orange={{
-            label: 'Recoverable if that surplus were mined · per household',
-            value: `≈ ${eur(y.btcValueEur / n)}`,
-            gloss: `≈ ${eur(y.btcValueEur, { compact: true })} of value from energy already being thrown away`,
-            tags: btcTags(y),
+            label: 'The same energy, mined at today’s network',
+            value: `≈ ${eurModel(e.revenue.revenueEur)}`,
+            gloss: `≈ ${btcFigure(e.revenue.btcNet)} gross revenue, before costs — the net result is below`,
+            tags: btcTags(market),
           }}
         />
         <div className="mt-4">
-          <NotFinancialAdvice priceEur={market.priceEur} asOf={asOfDate(y.computedAt)} />
+          <NotFinancialAdvice priceEur={market.priceEur} asOf={asOf} live={market.live} />
         </div>
       </Section>
 
-      <Section title="The headline proposal">
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="card">
-            <p className="figure text-[44px] text-orange-700">50 / 50</p>
-            <p className="mt-2 font-display text-[20px] font-semibold text-ink">Sell half, hold half</p>
-            <p className="prose-body mt-2">
-              Sell {Math.round(DEFAULT_ASSUMPTIONS.sellShareMonthly * 100)}% of mined BTC monthly to fund
-              operations and return value / offset billpayer cost; hold the remaining
-              {' '}{Math.round((1 - DEFAULT_ASSUMPTIONS.sellShareMonthly) * 100)}% for capital appreciation.
+      <Section title="Does it pay?">
+        <p className="prose-body max-w-3xl">
+          Revenue is only half the picture. A fleet that runs only on surplus has to be big enough for the surplus when
+          it comes, and sits idle the rest of the time. With surplus available for{' '}
+          {num(DEFAULT_MINING_COSTS.surplusHoursPerYear)} hours a year, absorbing the {y.year} volume takes a fleet of
+          ≈ {num(Math.round(e.fleetMw / 10) * 10)} MW running {pct(e.utilisationPct, 0)} of the year.
+        </p>
+        <Callout tone={e.netEur >= 0 ? 'info' : 'warn'} title="Under our central assumptions">
+          {e.netEur >= 0 ? (
+            <p>
+              The fleet would earn ≈ {eurModel(e.netEur)} a year after costs, and breaks even at ≈{' '}
+              {eurModel(e.breakEvenPriceEur)} per BTC.
             </p>
-          </div>
-          <div className="card">
-            <FeatureIcon d="M12 3v8 M6.3 6.3a8 8 0 1 0 11.4 0" />
-            <p className="mt-2 font-display text-[20px] font-semibold text-ink">Interruptible by design</p>
-            <p className="prose-body mt-2">
-              Rapid, automatic switch-on/off tied to grid signals. The load drops within seconds when the
-              grid needs power, so it never competes with homes or industry.
+          ) : (
+            <p>
+              At today&apos;s price the fleet would <strong>not</strong> cover its costs: ≈ {eurModel(e.revenue.revenueEur)}{' '}
+              of revenue against ≈ {eurModel(e.totalAnnualCostEur)} of costs a year. It breaks even at ≈{' '}
+              {eurModel(e.breakEvenPriceEur)} per BTC, or with cheaper hardware, more hours of surplus, or no network
+              charges behind the meter. Change the assumptions below.
             </p>
-          </div>
-          <div className="card">
-            <FeatureIcon d="M3.5 8 12 3.5 20.5 8v8L12 20.5 3.5 16Z M3.5 8 12 12.5 20.5 8 M12 12.5v8" />
-            <p className="mt-2 font-display text-[20px] font-semibold text-ink">Mobile & modular</p>
-            <p className="prose-body mt-2">
-              Container-scale units sited close to energy sources, deployable where curtailment is highest
-              and relocatable as the grid evolves.
-            </p>
-          </div>
+          )}
+        </Callout>
+        <div className="mt-6">
+          <MiningCalculator defaultGwh={y.windMwh / 1000} market={market} />
         </div>
       </Section>
 
-      <Section title="How it works">
-        <ol className="prose-body max-w-3xl list-decimal space-y-3 pl-5">
-          <li>Modular mining units are sited next to wind/solar generation with high curtailment.</li>
-          <li>They mine <strong>only when energy is not otherwise in demand</strong> — i.e. during curtailment/constraint events when output would be dumped.</li>
-          <li>Grid signals trigger <strong>rapid, interruptible</strong> shut-off: when the system needs the power, the load drops instantly and the electricity flows to consumers.</li>
-          <li>Revenue is split 50/50 — sold to offset costs and held for the long term.</li>
-        </ol>
+      <Section title="How it compares with the alternatives">
+        <div className="card overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <caption className="sr-only">Ways to use or avoid surplus wind, compared</caption>
+            <thead>
+              <tr className="border-b border-ink-700 text-left">
+                {['Option', 'What it does', 'Time to deliver', 'Who pays', 'Limits'].map((h) => (
+                  <th key={h} scope="col" className="py-2 pr-4 font-display text-[13px] font-medium uppercase tracking-[0.08em] text-ink-700">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ALTERNATIVES.map((a) => (
+                <tr key={a.name} className="border-b border-ink-200 align-top">
+                  <th scope="row" className="py-2.5 pr-4 text-left font-medium text-ink">{a.name}</th>
+                  <td className="py-2.5 pr-4">{a.does}</td>
+                  <td className="py-2.5 pr-4">{a.time}</td>
+                  <td className="py-2.5 pr-4">{a.pays}</td>
+                  <td className="py-2.5">{a.limits}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="prose-body mt-3 max-w-3xl text-sm">
+          These are complements, not rivals: the grid needs reinforcing whatever else happens. Flexible mining&apos;s
+          distinguishing features are speed and private funding; its weaknesses are volatile revenue and public
+          acceptance.
+        </p>
+      </Section>
+
+      <Section title="Three policy options">
+        <div className="grid gap-4 md:grid-cols-3">
+          {OPTIONS.map((o) => (
+            <div key={o.id} className="flex flex-col border border-orange-200 bg-orange-100 p-5">
+              <p className="figure text-[40px] text-orange-700">{o.id}</p>
+              <h3 className="mt-2 text-[20px]">{o.t}</h3>
+              <p className="prose-body mt-2 text-sm">{o.b}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-[13px] text-ink-600">
+          Options A and B are technology-neutral: they help batteries, electrolysers and demand response as much as
+          mining. Option C tests the claims on this site with published data.
+        </p>
       </Section>
 
       <Section title="Objections, answered">
-        <Callout tone="proposal" title="The one thing to remember">
-          This proposal consumes <strong>only otherwise-curtailed renewable output</strong> — energy already
-          generated and thrown away. It behaves as an interruptible buyer of last resort that switches off the
-          instant the grid needs the power, so it adds <strong>no new fossil-fuelled demand</strong>. It
-          improves the economics of renewables and lowers billpayer costs.
-        </Callout>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {OBJECTIONS.map((o) => (
             <div key={o.q} className="card">
               <h3 className="font-semibold text-ink">{o.q}</h3>
@@ -166,32 +254,29 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
             </div>
           ))}
         </div>
-        <div className="mt-6"><NotFinancialAdvice priceEur={market.priceEur} asOf={asOfDate(y.computedAt)} /></div>
       </Section>
 
-      {/* Merged from the 20-year outlook: what the solution is worth over time */}
-      <Section title="Looking ahead: what this is worth over 20 years">
+      <Section title="Looking ahead: a 20-year scenario">
         <p className="prose-body mb-3 max-w-3xl">
-          These are <strong>scenarios, not predictions</strong> — anchored on Ireland&apos;s published
-          capacity targets and the 2022–2024 dispatch-down trend. Move the sliders and watch the waste
-          curve, the recovered value, and the savings per household recompute live.
+          A <strong>scenario, not a prediction</strong>: renewable capacity follows Ireland&apos;s published targets, and
+          dispatch-down rises with it on a grid that is not reinforced. Move the sliders to test the assumptions.
         </p>
         <Callout tone="warn" title="Read this first">
-          Long-range grid fixes — new transmission, storage, the Celtic Interconnector, a higher SNSP limit —
-          could reduce curtailment on their own, and Bitcoin&apos;s value is volatile. Treat every figure
-          below as an illustrative scenario output, with conservative defaults.
+          New transmission, storage, the Celtic Interconnector and changes to system operating limits could all cut
+          dispatch-down on their own. Bitcoin revenue halves at each halving and moves with the price. Treat every
+          figure below as an illustration of the assumptions, not an expectation.
         </Callout>
         <div className="mt-6">
-          <ForecastExplorer />
+          <ForecastExplorer market={market} />
         </div>
       </Section>
 
       <Section>
         <div className="rounded-sm bg-peat p-8 text-center text-white">
-          <h2 className="text-2xl font-semibold">Want to help make this happen?</h2>
+          <h2 className="text-2xl font-semibold !text-white">Want to help?</h2>
           <p className="mx-auto mt-2 max-w-2xl text-white/90">
-            Whether you&apos;re a policymaker, an investor, a renewable operator with curtailment, or a
-            supporter — there&apos;s a way to get involved.
+            Policymakers, renewable operators with constrained sites, and anyone who wants the data published — there
+            is a way to get involved.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/get-involved" className="btn-primary !bg-white !text-peat hover:!bg-green-100">Get involved</Link>
@@ -200,13 +285,5 @@ export default async function ProposalPage({ params }: { params: Promise<{ local
         </div>
       </Section>
     </>
-  );
-}
-
-function FeatureIcon({ d }: { d: string }) {
-  return (
-    <svg className="h-10 w-10 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
   );
 }

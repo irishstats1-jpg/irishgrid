@@ -18,6 +18,33 @@ export function eur(value: number, opts: { compact?: boolean; decimals?: number 
   }).format(value);
 }
 
+/** Round to `digits` significant figures. */
+export function roundSig(value: number, digits = 2): number {
+  if (value === 0 || !Number.isFinite(value)) return value;
+  const p = Math.pow(10, digits - Math.ceil(Math.log10(Math.abs(value))));
+  return Math.round(value * p) / p;
+}
+
+/**
+ * A modelled € figure: two significant figures, so a model never claims more
+ * precision than it has ("€55M", "€30", "€0.87").
+ */
+export function eurModel(value: number): string {
+  const r = roundSig(value, 2);
+  if (Math.abs(r) >= 1000) return eur(r, { compact: true });
+  return eur(r, { decimals: Math.abs(r) >= 10 ? 0 : 2 });
+}
+
+/** A modelled range: "€28M–€84M". */
+export function eurRange(low: number, high: number): string {
+  return `${eurModel(low)}–${eurModel(high)}`;
+}
+
+/** Reported volumes stay in GWh, exactly as published ("1,266 GWh"). */
+export function gwh(mwh: number): string {
+  return `${Math.round(mwh / 1000).toLocaleString('en-IE')} GWh`;
+}
+
 /**
  * MWh → human string, per the brand's unit rule (§07.2): TWh to one decimal at
  * or above 1,000 GWh; GWh as whole numbers below; MWh under 1 GWh.

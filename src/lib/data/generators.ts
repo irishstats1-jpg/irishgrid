@@ -11,26 +11,27 @@ export interface Generator {
   region: string;
   isMajor: boolean;
   commissionedYear?: number;
+  /** Status note shown in the map popup (e.g. reserve-only). */
+  note?: string;
   sourceRef: string;
 }
 
 /**
- * Curated generator set for the map (§5.1, §6). `isMajor` sites form the clean
- * default view; the full set loads behind "Open detailed map".
- *
- * SEED DATA — approximate coordinates/capacities for a representative set of the
- * Republic's largest/most representative generators. In production this table is
- * populated from EirGrid's "List of Connected & Contracted Generators" joined to
- * OpenStreetMap `power=plant/generator` for coordinates, imported via /admin.
+ * A curated, partial set of large generators and interconnectors for the map —
+ * locations, fuel and capacity only. It is NOT a complete list (Ireland has
+ * several hundred wind farms) and carries no output or waste estimates.
+ * Coordinates are approximate. Last reviewed October 2026: Moneypoint ended
+ * coal burning on 20 June 2025 (oil-fired reserve only, to 2029); the original
+ * Tarbert plant closed in 2023; Greenlink (to Wales) entered service in
+ * January 2025.
  */
 export const GENERATORS: Generator[] = [
   // ---- Gas (thermal) ----
-  { id: 'moneypoint', name: 'Moneypoint', fuelType: 'coal', capacityMw: 855, operator: 'ESB', lat: 52.611, lng: -9.406, region: 'Clare', isMajor: true, sourceRef: 'EirGrid connected generators' },
+  { id: 'moneypoint', name: 'Moneypoint', fuelType: 'oil', capacityMw: 855, operator: 'ESB', lat: 52.611, lng: -9.406, region: 'Clare', isMajor: true, note: 'Stopped burning coal on 20 June 2025; oil-fired reserve on EirGrid instruction only, until 2029.', sourceRef: 'ESB, June 2025' },
   { id: 'aghada', name: 'Aghada', fuelType: 'gas', capacityMw: 885, operator: 'ESB', lat: 51.827, lng: -8.211, region: 'Cork', isMajor: true, sourceRef: 'EirGrid connected generators' },
   { id: 'whitegate', name: 'Whitegate', fuelType: 'gas', capacityMw: 445, operator: 'Bord Gáis Energy', lat: 51.826, lng: -8.230, region: 'Cork', isMajor: true, sourceRef: 'EirGrid connected generators' },
   { id: 'poolbeg', name: 'Poolbeg', fuelType: 'gas', capacityMw: 470, operator: 'ESB', lat: 53.339, lng: -6.187, region: 'Dublin', isMajor: true, sourceRef: 'EirGrid connected generators' },
   { id: 'huntstown', name: 'Huntstown', fuelType: 'gas', capacityMw: 747, operator: 'Energia', lat: 53.410, lng: -6.320, region: 'Dublin', isMajor: true, sourceRef: 'EirGrid connected generators' },
-  { id: 'tarbert', name: 'Tarbert', fuelType: 'oil', capacityMw: 590, operator: 'ESB', lat: 52.573, lng: -9.375, region: 'Kerry', isMajor: true, sourceRef: 'EirGrid connected generators' },
   { id: 'great-island', name: 'Great Island', fuelType: 'gas', capacityMw: 464, operator: 'SSE', lat: 52.238, lng: -6.951, region: 'Wexford', isMajor: true, sourceRef: 'EirGrid connected generators' },
   { id: 'dublin-bay', name: 'Dublin Bay Power', fuelType: 'gas', capacityMw: 415, operator: 'Synergen', lat: 53.339, lng: -6.190, region: 'Dublin', isMajor: false, sourceRef: 'EirGrid connected generators' },
 
@@ -51,10 +52,11 @@ export const GENERATORS: Generator[] = [
 
   // ---- Hydro ----
   { id: 'ardnacrusha', name: 'Ardnacrusha', fuelType: 'hydro', capacityMw: 86, operator: 'ESB', lat: 52.706, lng: -8.605, region: 'Clare', isMajor: true, sourceRef: 'EirGrid connected generators' },
-  { id: 'turlough-hill', name: 'Turlough Hill (pumped storage)', fuelType: 'hydro', capacityMw: 292, operator: 'ESB', lat: 53.078, lng: -6.336, region: 'Wicklow', isMajor: true, sourceRef: 'EirGrid connected generators' },
+  { id: 'turlough-hill', name: 'Turlough Hill (pumped storage)', fuelType: 'storage', capacityMw: 292, operator: 'ESB', lat: 53.078, lng: -6.336, region: 'Wicklow', isMajor: true, sourceRef: 'EirGrid connected generators' },
   { id: 'erne', name: 'Erne Scheme', fuelType: 'hydro', capacityMw: 65, operator: 'ESB', lat: 54.500, lng: -8.230, region: 'Donegal', isMajor: false, sourceRef: 'EirGrid connected generators' },
 
   // ---- Interconnection ----
+  { id: 'greenlink', name: 'Greenlink Interconnector', fuelType: 'imports', capacityMw: 500, operator: 'Greenlink Interconnector Ltd', lat: 52.236, lng: -6.958, region: 'Wexford (to Wales)', isMajor: true, note: 'In service since January 2025.', sourceRef: 'Greenlink' },
   { id: 'ewic', name: 'East-West Interconnector', fuelType: 'imports', capacityMw: 500, operator: 'EirGrid', lat: 53.480, lng: -6.150, region: 'Dublin (to GB)', isMajor: true, sourceRef: 'EirGrid connected generators' },
 ];
 
@@ -63,10 +65,11 @@ export const FUEL_LABELS: Record<FuelType, string> = {
   solar: 'Solar',
   gas: 'Gas',
   hydro: 'Hydro',
+  storage: 'Pumped storage',
   coal: 'Coal',
   oil: 'Oil',
   other: 'Other',
-  imports: 'Imports',
+  imports: 'Interconnector',
 };
 
 // Brand Book §04: renewables in Grid Green tints (told apart by lightness);
@@ -75,6 +78,7 @@ export const FUEL_COLORS: Record<FuelType, string> = {
   wind: '#169B62', // green 500
   solar: '#91D6B1', // green 300
   hydro: '#0A4A2F', // green 800
+  storage: '#52BC88', // green 400
   gas: '#6B6F73', // ink 500
   coal: '#2A2C2E', // ink 800
   oil: '#4F5357', // ink 600

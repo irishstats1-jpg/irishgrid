@@ -1,134 +1,176 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale as setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { PageHeader, Section, Callout, Takeaway } from '@/components/ui';
+import { PageHeader, Section, Callout, NotFinancialAdvice, TagRow, Takeaway } from '@/components/ui';
+import { getBtcMarket, getHeadlineYear, refreshLiveData } from '@/lib/data/metrics';
+import { asOfDate } from '@/lib/basis';
+import { gwh, num, pct } from '@/lib/format';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'The Bitcoin network — the world’s most flexible energy buyer',
+  title: 'The flexible load — how Bitcoin mining uses electricity',
   description:
-    'A plain-English primer on the Bitcoin network: its scale, how mining actually works, why it uses energy, and why it is the most secure decentralised network ever built — and the one property that makes it useful for Ireland’s grid.',
+    'A plain-English briefing on the Bitcoin network: how mining works, how much electricity it uses, why it can be switched off in seconds, and the fair criticisms of it.',
 };
 
-const SCALE = [
-  {
-    stat: '$1 trillion+',
-    label: 'Network value',
-    body: 'Bitcoin is one of the largest monetary networks on earth, held by individuals, companies and now governments — settling value 24/7 without any bank in the middle.',
-  },
-  {
-    stat: 'Hundreds of EH/s',
-    label: 'Computing power securing it',
-    body: 'The network runs at hundreds of exahashes per second — more computing power than every tech giant combined — all pointed at keeping the ledger honest.',
-  },
-  {
-    stat: '~100 countries',
-    label: 'Tens of thousands of nodes',
-    body: 'No head office and no off-switch: independent computers on six continents each keep a full copy of the ledger and enforce the same rules.',
-  },
-  {
-    stat: '~10 minutes',
-    label: 'A new block, like clockwork',
-    body: 'Since 2009 the network has added a new block of transactions roughly every ten minutes, essentially without interruption — one of the most reliable systems ever built.',
-  },
-];
+/** Assumed average efficiency of the whole global fleet (newer machines are ≈ 17.5 J/TH). */
+const FLEET_AVERAGE_J_PER_TH = 20;
+/** Ireland's metered electricity consumption, 2024 (CSO, June 2025): 31,900 GWh. */
+const IRELAND_DEMAND_TWH = 31.9;
 
 const STEPS = [
   {
     n: 1,
     t: 'Transactions are bundled',
-    b: 'Pending payments from around the world are grouped into a candidate “block.”',
+    b: 'Pending payments from around the world are grouped into a candidate “block”.',
   },
   {
     n: 2,
-    t: 'Computers race to solve a puzzle',
-    b: 'Miners repeatedly guess a number that makes the block’s digital fingerprint (its “hash”) fall below a target. There is no shortcut — you simply have to try, trillions of times a second. This is “proof of work.”',
+    t: 'Computers compete to seal the block',
+    b: 'Miners repeatedly guess a number that makes the block’s digital fingerprint (its “hash”) fall below a target. There is no shortcut: each guess is a calculation, and the network makes hundreds of billions of billions of them a second. This is “proof of work”.',
   },
   {
     n: 3,
-    t: 'A winner seals the block',
-    b: 'Roughly every ten minutes one miner finds a valid answer, broadcasts it, and every other computer instantly checks and accepts it. The winner earns newly-issued bitcoin plus transaction fees.',
+    t: 'A winner is paid',
+    b: 'About every ten minutes one miner finds a valid answer. Every other computer checks it, and the winner receives newly issued bitcoin (3.125 BTC per block until the 2028 halving) plus transaction fees.',
   },
   {
     n: 4,
-    t: 'Difficulty self-adjusts',
-    b: 'If more computing power joins, the puzzle automatically gets harder to keep blocks at ~10 minutes; if power leaves, it gets easier. The network quietly re-balances itself roughly every two weeks — no committee required.',
+    t: 'Difficulty adjusts itself',
+    b: 'If more machines join, the target gets harder so blocks stay at about ten minutes; if machines leave, it gets easier. The adjustment happens every 2,016 blocks, roughly every two weeks.',
   },
 ];
 
 const PROPERTIES = [
   {
     icon: 'pin',
-    t: 'It goes to the power',
-    b: 'A mining unit is a shipping container of computers and an internet link. It can sit right next to a wind farm at the far end of the grid — the energy no longer has to travel to find a customer.',
+    t: 'It can go to the power',
+    b: 'A mining unit is a container of computers with a power and internet connection. It can sit beside a wind farm at the edge of the grid, so the energy does not have to travel to find a customer.',
   },
   {
     icon: 'power',
-    t: 'It stops in seconds',
-    b: 'Unlike a smelter or a data centre full of websites, mining has no deadline. It can power down within seconds on a grid signal and lose nothing but that moment’s work.',
+    t: 'It can stop in seconds',
+    b: 'Mining has no deadline and no product spoiled by stopping. A site can shut down within seconds to minutes on a grid signal and lose only the revenue for that time.',
   },
   {
     icon: 'clock',
-    t: 'It buys 24/7',
-    b: 'The network never sleeps and never says “no thanks.” That makes it a guaranteed buyer for surplus energy that would otherwise be worth nothing at all.',
+    t: 'It buys at any hour',
+    b: 'The network runs around the clock, so a mining site will use surplus power at 3 a.m. on a windy Sunday as readily as at noon.',
   },
   {
     icon: 'coin',
-    t: 'It needs no subsidy',
-    b: 'It is funded by private capital chasing a global market price — not by levies on your bill or grants from the taxpayer. It competes with no household for power.',
+    t: 'It pays its own way — or does not run',
+    b: 'It is privately funded and earns from a global market. If it is restricted to surplus power, it does not compete with homes or businesses for supply.',
+  },
+];
+
+const CRITICISMS = [
+  {
+    q: 'It uses a great deal of electricity.',
+    a: 'True — the network as a whole uses more electricity than Ireland. The question for Ireland is narrower: whether some of that demand could run on power that is already being turned away, and stop when anyone else needs it.',
+  },
+  {
+    q: 'The hardware becomes waste.',
+    a: 'Mining machines are specialised and are replaced every few years as more efficient models appear. Any scheme should set recycling and decommissioning obligations.',
+  },
+  {
+    q: 'Sites can be noisy.',
+    a: 'Air-cooled sites are loud. Planning conditions, immersion cooling and siting away from homes all apply, as they would to any industrial load.',
+  },
+  {
+    q: 'The price is volatile.',
+    a: 'Revenue follows the bitcoin price and falls by half at each halving. That is a risk for the investor, which is why this site shows break-even prices rather than a single forecast — and why no public money should be at stake.',
   },
 ];
 
 export default async function BitcoinPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  await refreshLiveData();
+  const market = getBtcMarket();
+  const y = getHeadlineYear();
+  const asOf = asOfDate(market.asOf);
+  const ehs = market.networkHashrateThs / 1e6;
+  const networkGw = (market.networkHashrateThs * FLEET_AVERAGE_J_PER_TH) / 1e9;
+  const networkTwh = (networkGw * 8760) / 1000;
+  const irelandAvgMw = y.windMwh / 8760;
+
+  const scale = [
+    {
+      stat: `≈ ${num(Math.round(ehs / 10) * 10)} EH/s`,
+      label: 'Network hashrate',
+      body: `Guesses per second across the whole network, on ${asOf} (mempool.space).`,
+    },
+    {
+      stat: `≈ ${num(Math.round(networkGw))} GW`,
+      label: 'Continuous electricity demand',
+      body: `≈ ${num(Math.round(networkTwh / 10) * 10)} TWh a year — about ${num(Math.round(networkTwh / IRELAND_DEMAND_TWH))}× Ireland’s metered electricity use in 2024 (CSO). Modelled at an assumed fleet average of ${FLEET_AVERAGE_J_PER_TH} J/TH.`,
+    },
+    {
+      stat: '~10 minutes',
+      label: 'Between blocks',
+      body: 'The network has added a block about every ten minutes since 2009.',
+    },
+    {
+      stat: '21 million',
+      label: 'Maximum supply',
+      body: 'New issuance halves about every four years. Over 95% of all bitcoin has already been issued.',
+    },
+  ];
+
   return (
     <>
       <PageHeader
-        eyebrow="Step 02 · An Líonra Bitcoin · The tool"
+        eyebrow="02 · An Líonra Bitcoin — The flexible load"
         step={2}
-        title="Meet the world’s most flexible energy buyer"
+        title="An electricity user that can stop in seconds"
         intro={
           <>
-            To see how we fix the waste in Step 1, you need to understand one thing: the{' '}
-            <strong>Bitcoin network</strong>. Forget the headlines and the price charts for a moment — what
-            matters here is what it <em>is</em> and how it <em>behaves</em>. It turns out to have exactly the
-            properties a grid drowning in surplus clean energy is crying out for.
+            Step 01 showed the problem: clean power Ireland turns away and pays for. Using it needs a buyer that can
+            take power whenever there is a surplus, stop whenever there is not, and sit where the wind is. Bitcoin
+            mining is one such load. This page explains what it is and how it uses electricity — including the fair
+            criticisms — without asking anyone to like it.
           </>
         }
       />
 
-      <Section title="What it actually is">
+      <Section title="What it is">
         <p className="prose-body max-w-3xl">
-          At its simplest, Bitcoin is <strong>money that runs on maths instead of on any single bank,
-          company or government</strong>. A worldwide web of independent computers keeps one shared,
-          tamper-evident ledger and agrees, every ten minutes, on who owns what. Nobody is in charge, so
-          nobody can quietly print more, freeze your account, or switch the system off. That is either
-          revolutionary or unnerving depending on your politics — but it is not in dispute.
+          Bitcoin is a payment network and a digital asset that runs without a central operator. Thousands of
+          independent computers keep copies of one shared ledger and agree, about every ten minutes, on which
+          transactions to add. Supporters value it because no single company or government controls it; critics point
+          to its energy use and its price swings. Both facts matter here.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {SCALE.map((s) => (
+          {scale.map((s) => (
             <div key={s.label} className="card">
-              <p className="figure text-[38px] text-orange-700">{s.stat}</p>
+              <p className="figure text-[34px] text-ink">{s.stat}</p>
               <p className="mt-1 font-semibold text-ink">{s.label}</p>
               <p className="prose-body mt-2 text-sm">{s.body}</p>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-xs text-ink-500">
-          Figures are rounded and illustrative of scale, not precise real-time values — network value and
-          computing power move constantly. Sources: public network data (e.g. mempool.space, CoinGecko).
+        <TagRow
+          className="mt-3"
+          tags={[
+            { kind: 'period', label: asOf },
+            { kind: 'method', label: market.live ? 'mempool.space · CoinGecko' : 'Stored snapshot · mempool.space' },
+            { kind: 'method', label: 'Electricity demand modelled' },
+          ]}
+        />
+        <p className="mt-2 text-[13px] text-ink-600">
+          The Cambridge Bitcoin Electricity Consumption Index is the standard independent estimate of the
+          network&apos;s electricity use:{' '}
+          <a href="https://ccaf.io/cbnsi/cbeci" target="_blank" rel="noopener noreferrer" className="link">ccaf.io/cbnsi/cbeci</a>.
         </p>
       </Section>
 
-      <Section title="How mining actually works">
-        <p className="prose-body mb-6 max-w-3xl">
-          &ldquo;Mining&rdquo; is just the name for the process that secures the ledger and issues new coins.
-          In plain English:
-        </p>
+      <Section title="How mining works">
         <ol className="grid gap-4 md:grid-cols-2">
           {STEPS.map((s) => (
             <li key={s.n} className="card flex gap-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-orange-100 font-display text-[18px] font-semibold text-orange-700">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-ink-100 font-display text-[18px] font-semibold text-ink">
                 {s.n}
               </span>
               <div>
@@ -140,38 +182,33 @@ export default async function BitcoinPage({ params }: { params: Promise<{ locale
         </ol>
       </Section>
 
-      <Section title="Why it uses energy — and why that’s the point">
+      <Section title="Why it uses electricity">
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="prose-body space-y-4">
             <p>
-              People often ask why the network should burn any energy at all. The honest answer:{' '}
-              <strong>the energy is the security</strong>. Because writing to the ledger costs real
-              electricity, rewriting history would cost more than the entire honest network is spending —
-              which is astronomically expensive. There is no password to steal and no server to hack; an
-              attacker would have to out-muscle the whole planet&apos;s mining power at once.
+              The electricity is how the ledger is secured. Rewriting past transactions would mean redoing the work
+              faster than the rest of the network combined, so the cost of attacking it rises with the energy the
+              honest network spends.
             </p>
             <p>
-              That is why it is fair to call Bitcoin the <strong>most secure, decentralised network ever
-              built</strong>. It has no CEO, no head office and no single point of failure. It grew the way a
-              coral reef or a language grows — <em>organically</em>, by open, permissionless participation
-              from millions of people who never had to ask anyone&apos;s permission to join.
+              Because the work can be done anywhere with power and an internet connection, miners go wherever
+              electricity is cheapest — and cheapest is often power that would otherwise be wasted: stranded gas,
+              spilled hydro, or curtailed wind.
             </p>
           </div>
-          <Callout tone="proposal" title="The key insight for Ireland">
+          <Callout tone="proposal" title="The scale, for Ireland">
             <p>
-              Because mining can happen <strong>anywhere there is power and an internet connection</strong>,
-              and because it can be <strong>switched off instantly</strong> at no real cost, it is unlike any
-              other large electricity user. It doesn&apos;t need the energy at a particular place or a
-              particular time — it just needs energy that would otherwise be wasted. Hold that thought.
+              Spread over the year, the {gwh(y.windMwh)} of wind turned away in Ireland in {y.year} averages ≈{' '}
+              {num(Math.round(irelandAvgMw))} MW — enough to run about{' '}
+              {pct(y.mining.revenue.networkSharePct, 1)} of the network at today&apos;s efficiency. In practice the
+              surplus comes in bursts, so a site sized to catch it would be larger and idle much of the time. That is
+              the central economic question, covered in step 03.
             </p>
           </Callout>
         </div>
       </Section>
 
-      <Section title="The one property that matters for the grid">
-        <p className="prose-body mb-6 max-w-3xl">
-          Strip away everything else and four features make this the ideal home for surplus clean energy:
-        </p>
+      <Section title="The properties that matter for a grid">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PROPERTIES.map((p) => (
             <div key={p.t} className="card">
@@ -181,32 +218,48 @@ export default async function BitcoinPage({ params }: { params: Promise<{ locale
             </div>
           ))}
         </div>
-        <Callout tone="proposal" title="“But doesn’t Bitcoin waste energy?”">
+        <p className="prose-body mt-4 max-w-3xl text-sm">
+          Other flexible loads share some of these properties — electrolysers making hydrogen, heat storage, batteries
+          and demand response from industry. Step 03 compares them.
+        </p>
+      </Section>
+
+      <Section title="Fair criticisms">
+        <div className="grid gap-4 md:grid-cols-2">
+          {CRITICISMS.map((c) => (
+            <div key={c.q} className="card">
+              <h3 className="font-semibold text-ink">{c.q}</h3>
+              <p className="prose-body mt-2 text-sm">{c.a}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6">
+        <Callout tone="proposal" title="What is — and is not — proposed">
           <p>
-            It is a fair challenge — and the opposite of what&apos;s proposed here. This site is{' '}
-            <strong>not</strong> arguing for building new power stations to mine Bitcoin. It argues for
-            pointing this uniquely flexible, interruptible, subsidy-free buyer at the clean energy Ireland is{' '}
-            <em>already</em> generating and <em>already</em> throwing away. Used that way, it doesn&apos;t
-            waste energy — it <strong>rescues</strong> it.
+            Nothing on this site argues for new power stations to run mining, or for mining that draws on power homes
+            and businesses need. The option examined is narrower: a load that runs only on power the grid is already
+            turning away, and stops when it is told to.
           </p>
           <Takeaway>
-            For billpayers: lower bills. For the climate: better renewable economics, more clean build-out, no
-            new fossil demand. For the taxpayer: private capital, no subsidy, more energy independence. One tool,
-            all three.
+            For billpayers, the test is lower costs. For the climate, more clean power used. For the taxpayer, no
+            public money at risk. Step 03 sets out whether it passes.
           </Takeaway>
         </Callout>
+        </div>
+        <div className="mt-4">
+          <NotFinancialAdvice priceEur={market.priceEur} asOf={asOf} live={market.live} />
+        </div>
       </Section>
 
       <Section>
         <div className="rounded-sm bg-peat p-6 text-white md:p-8">
-          <p className="eyebrow !text-green-300">Next in the story · Step 03</p>
+          <p className="eyebrow !text-green-300">Next · 03 · An Réiteach — The policy option</p>
           <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <p className="max-w-2xl text-white/90">
-              A problem: clean energy we throw away and pay for. A tool: a flexible, interruptible, always-on
-              energy buyer. Put them together and you get a solution that lowers bills, helps build more
-              renewables, and costs the public nothing.
+              The costs, the break-even price, the alternatives, and three policy options that would help any flexible
+              load use Ireland&apos;s surplus.
             </p>
-            <Link href="/proposal" className="btn-accent shrink-0">The solution →</Link>
+            <Link href="/proposal" className="btn-accent shrink-0">The policy option →</Link>
           </div>
         </div>
       </Section>

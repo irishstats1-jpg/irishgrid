@@ -1,57 +1,86 @@
 import { describe, it, expect } from 'vitest';
-import { computePeriodMetrics, getGeneratorModelledOutput, ALL_PERIODS } from './metrics';
+import { computeYearMetrics, getAllYears, getHeadlineYear, mergeAnnual } from './metrics';
+import { ANNUAL_DISPATCH_DOWN, HOUSEHOLDS, type AnnualDispatchDown } from './dispatchDown';
+import { FALLBACK_BTC_MARKET } from '../methodology';
+import { eurModel, roundSig } from '../format';
 
-describe('computePeriodMetrics', () => {
-  it('marks short periods as estimates and year views as actuals', () => {
-    expect(computePeriodMetrics('last_week').isEstimate).toBe(true);
-    expect(computePeriodMetrics('last_month').isEstimate).toBe(true);
-    expect(computePeriodMetrics('2024').isEstimate).toBe(false);
+const seed = (year: number) => ANNUAL_DISPATCH_DOWN.find((d) => d.year === year)!;
+
+describe('annual series', () => {
+  it('matches the published EirGrid figures for reported years', () => {
+    expect(seed(2022).windGwh).toBe(988);
+    expect(seed(2023).windGwh).toBe(1124);
+    expect(seed(2024).windGwh).toBe(1266);
+    expect(seed(2024).windPctOfAvailable).toBe(10.1);
   });
 
-  it('year views expose curtailment/constraint split from actuals', () => {
-    const m = computePeriodMetrics('2024');
-    expect(m.curtailmentMwh).toBeGreaterThan(0);
-    expect(m.constraintMwh).toBeGreaterThan(0);
-    expect(m.wastedMwh).toBeCloseTo((m.curtailmentMwh ?? 0) + (m.constraintMwh ?? 0), 0);
+  it('cites a source document for every year', () => {
+    for (const d of ANNUAL_DISPATCH_DOWN) expect(d.sourceUrl).toMatch(/^https:\/\//);
   });
 
-  it('produces non-negative headline figures for every period', () => {
-    for (const p of ALL_PERIODS) {
-      const m = computePeriodMetrics(p);
-      expect(m.producedMwh).toBeGreaterThanOrEqual(0);
-      expect(m.wastedMwh).toBeGreaterThanOrEqual(0);
-      expect(m.costEur).toBeGreaterThanOrEqual(0);
-      expect(m.btcValueEur).toBeGreaterThanOrEqual(0);
-    }
-  });
-
-  it('longer periods waste more energy than shorter ones', () => {
-    const week = computePeriodMetrics('last_week').wastedMwh;
-    const month = computePeriodMetrics('last_month').wastedMwh;
-    expect(month).toBeGreaterThan(week);
-  });
-
-  it('curtailment worsened year on year in the actuals (2022 → 2024)', () => {
-    expect(computePeriodMetrics('2024').wastedMwh).toBeGreaterThan(computePeriodMetrics('2022').wastedMwh);
+  it('headlines the latest REPORTED year, not a provisional one', () => {
+    const h = getHeadlineYear();
+    expect(h.method).toBe('reported');
+    const latest = getAllYears()[0];
+    expect(h.year).toBeLessThanOrEqual(latest.year);
   });
 });
 
-describe('getGeneratorModelledOutput', () => {
-  it('pro-rates fuel-type system generation across installed capacity', () => {
-    const r = getGeneratorModelledOutput('aghada', 'last_week');
-    expect(r).not.toBeNull();
-    expect(r!.modelledOutputMwh).toBeGreaterThan(0);
-    expect(r!.isEstimate).toBe(true);
+describe('computeYearMetrics', () => {
+  const m = computeYearMetrics(seed(2024), FALLBACK_BTC_MARKET);
+
+  it('uses the reported split when the report gives one', () => {
+    expect(m.constraintShareReported).toBe(true);
+    expect(m.constraintShare).toBe(0.5);
+    expect(m.constraintMwh + m.curtailmentMwh).toBeCloseTo(m.windMwh, 6);
   });
 
-  it('attributes wasted energy only to wind plants', () => {
-    const wind = getGeneratorModelledOutput('galway-wind-park', 'last_week');
-    const gas = getGeneratorModelledOutput('aghada', 'last_week');
-    expect(wind!.attributableWastedMwh).toBeGreaterThan(0);
-    expect(gas!.attributableWastedMwh).toBe(0);
+  it('divides by households, the one denominator', () => {
+    expect(m.costPerHousehold.central).toBeCloseTo(m.cost.central / HOUSEHOLDS.count, 6);
   });
 
-  it('returns null for an unknown generator', () => {
-    expect(getGeneratorModelledOutput('does-not-exist', 'last_week')).toBeNull();
+  it('values replacement on the constrained volume only', () => {
+    expect(m.replacementCostEur).toBeCloseTo(m.constraintMwh * 95, 2);
+  });
+
+  it('assumes the split when the report does not give one', () => {
+    const y = computeYearMetrics(seed(2022), FALLBACK_BTC_MARKET);
+    expect(y.constraintShareReported).toBe(false);
+  });
+});
+
+describe('mergeAnnual', () => {
+  const row = (over: Partial<AnnualDispatchDown>): AnnualDispatchDown => ({ ...seed(2024), ...over });
+
+  it('never lets a database row overwrite a reported seed', () => {
+    const merged = mergeAnnual(ANNUAL_DISPATCH_DOWN, [row({ year: 2024, windGwh: 99999, method: 'reported' })]);
+    expect(merged.find((d) => d.year === 2024)!.windGwh).toBe(1266);
+  });
+
+  it('lets a reported row replace a provisional seed', () => {
+    const merged = mergeAnnual(ANNUAL_DISPATCH_DOWN, [row({ year: 2025, windGwh: 1400, method: 'reported' })]);
+    const y = merged.find((d) => d.year === 2025)!;
+    expect(y.windGwh).toBe(1400);
+    expect(y.method).toBe('reported');
+  });
+
+  it('ignores provisional rows', () => {
+    const merged = mergeAnnual(ANNUAL_DISPATCH_DOWN, [row({ year: 2026, windGwh: 2000, method: 'provisional' })]);
+    expect(merged.find((d) => d.year === 2026)).toBeUndefined();
+  });
+
+  it('adds a new reported year', () => {
+    const merged = mergeAnnual(ANNUAL_DISPATCH_DOWN, [row({ year: 2026, windGwh: 2000, method: 'reported' })]);
+    expect(merged[merged.length - 1].year).toBe(2026);
+  });
+});
+
+describe('rounding of modelled figures', () => {
+  it('rounds to two significant figures', () => {
+    expect(roundSig(54_596_250)).toBe(55_000_000);
+    expect(roundSig(29.65)).toBe(30);
+    expect(roundSig(0.8734)).toBe(0.87);
+    expect(eurModel(54_596_250)).toBe('€55M');
+    expect(eurModel(-57_400_000)).toBe('-€57M');
   });
 });

@@ -1,12 +1,13 @@
-// 20-year forecast engine (§7.5). A SCENARIO PROJECTION — clearly not a
-// prediction. Builds a renewable-capacity trajectory from published anchors,
-// scales curtailment with penetration (calibrated to the ROI dispatch-down
-// trend), and applies the §7.3 BTC model to estimate per-household savings.
+// 20-year scenario engine. A SCENARIO, not a prediction: renewable capacity
+// follows published targets, dispatch-down rises with capacity on a
+// business-as-usual grid, and — in the flexible-demand scenario — a share of
+// the surplus is used by flexible load. Bitcoin revenue follows the halving
+// schedule and a growing network, so later years earn far less per MWh.
 
 import type { Assumptions, BtcMarket } from './types';
-import { computeBtcSavings } from './btc';
+import { averageBlockReward, HOURS_PER_YEAR } from './constants';
+import { computeMiningRevenue } from './btc';
 
-/** A single (year) anchor for total installed renewable capacity, GW. */
 export interface CapacityAnchor {
   year: number;
   gw: number;
@@ -15,33 +16,30 @@ export interface CapacityAnchor {
 export interface ForecastConfig {
   startYear: number;
   endYear: number;
-  /** Total renewable-capacity anchors (offshore+onshore+solar), interpolated between. */
+  /** Installed renewable capacity anchors (onshore + offshore + solar), GW. */
   capacityAnchors: CapacityAnchor[];
-  /** Scenario pace multiplier applied to capacity above the start year (1 = balanced). */
+  /** Pace multiplier on growth above the start year (1 = published targets). */
   pathwayMultiplier: number;
-  /** Blended capacity factor GW → annual GWh. */
   capacityFactor: number;
-  /** Electricity demand in the start year, GWh. */
-  demandStartGwh: number;
-  /** Annual demand growth rate (data-centre-led). */
-  demandGrowth: number;
-  /** Curtailment rate at the reference capacity. */
-  curtailmentBaseRate: number;
-  /** Total renewable capacity (GW) the base rate is calibrated to. */
+  /** Dispatch-down rate at the reference capacity (2024 Ireland wind: 10.1%). */
+  dispatchDownBaseRate: number;
   curtailmentRefCapacityGw: number;
-  /** Rise in curtailment rate per additional GW of renewable capacity. */
-  curtailmentSlopePerGw: number;
-  /** Hard cap on the curtailment rate. */
-  curtailmentMaxRate: number;
-  /** Share of curtailable energy a flexible mining fleet absorbs (0–1). */
-  miningAbsorbedShare: number;
+  /** Rise in the dispatch-down rate per additional GW on a business-as-usual grid. */
+  dispatchDownSlopePerGw: number;
+  dispatchDownMaxRate: number;
+  /** Share of the surplus the flexible fleet uses (0–1). */
+  flexibleAbsorbedShare: number;
+  /** Annual growth of the Bitcoin network hashrate (0.15 = 15%/yr). */
+  networkGrowth: number;
+  /** Annual change in the BTC price in euro (0 = flat). */
+  priceGrowth: number;
 }
 
 export const DEFAULT_FORECAST_CONFIG: ForecastConfig = {
   startYear: 2026,
   endYear: 2046,
-  // Published targets: onshore ~9 GW + solar ~8 GW + offshore 5 GW ≈ 22 GW by 2030;
-  // offshore 20 GW (2040) and 37 GW (2050) push totals to ~43 and ~63 GW.
+  // Published targets: ~22 GW of renewables by 2030 (onshore ~9, solar ~8,
+  // offshore 5); offshore 20 GW by 2040 and 37 GW by 2050.
   capacityAnchors: [
     { year: 2026, gw: 7 },
     { year: 2030, gw: 22 },
@@ -49,32 +47,32 @@ export const DEFAULT_FORECAST_CONFIG: ForecastConfig = {
     { year: 2050, gw: 63 },
   ],
   pathwayMultiplier: 1,
-  capacityFactor: 0.3,
-  demandStartGwh: 35_000,
-  demandGrowth: 0.02,
-  curtailmentBaseRate: 0.1, // ROI renewable DD ≈ 8.8% in 2024, trend rising
-  curtailmentRefCapacityGw: 6, // ≈ 2024 renewable capacity
-  curtailmentSlopePerGw: 0.008,
-  curtailmentMaxRate: 0.5,
-  miningAbsorbedShare: 0.6,
+  // Blended across the 2030 mix (onshore ≈ 0.28, solar ≈ 0.11, offshore ≈ 0.40).
+  capacityFactor: 0.25,
+  dispatchDownBaseRate: 0.101,
+  curtailmentRefCapacityGw: 6,
+  dispatchDownSlopePerGw: 0.008,
+  dispatchDownMaxRate: 0.5,
+  flexibleAbsorbedShare: 0.6,
+  networkGrowth: 0.15,
+  priceGrowth: 0,
 };
 
-export type Scenario = 'bau' | 'with_mining';
+export type Scenario = 'bau' | 'with_flexible_demand';
 
 export interface ForecastPoint {
   year: number;
   renewableCapacityGw: number;
-  penetrationPct: number;
   renewableGwh: number;
-  curtailmentRate: number;
-  curtailmentGwh: number;
-  /** Energy recovered by mining (0 for BAU). */
-  recoveredGwh: number;
-  recoveredValueEur: number;
-  savingPerHouseholdEur: number;
+  dispatchDownRate: number;
+  dispatchDownGwh: number;
+  /** Surplus energy used by flexible demand (0 in business as usual). */
+  absorbedGwh: number;
+  blockRewardBtc: number;
+  /** Gross Bitcoin revenue from the absorbed energy, before costs. */
+  grossRevenueEur: number;
 }
 
-/** Linear interpolation across capacity anchors (extrapolates at the ends). */
 export function interpolateCapacity(anchors: CapacityAnchor[], year: number): number {
   const sorted = [...anchors].sort((a, b) => a.year - b.year);
   if (sorted.length === 0) return 0;
@@ -83,20 +81,14 @@ export function interpolateCapacity(anchors: CapacityAnchor[], year: number): nu
   for (let i = 0; i < sorted.length - 1; i++) {
     const a = sorted[i];
     const b = sorted[i + 1];
-    if (year >= a.year && year <= b.year) {
-      const t = (year - a.year) / (b.year - a.year);
-      return a.gw + t * (b.gw - a.gw);
-    }
+    if (year >= a.year && year <= b.year) return a.gw + ((year - a.year) / (b.year - a.year)) * (b.gw - a.gw);
   }
   return sorted[sorted.length - 1].gw;
 }
 
-/** Curtailment rate rises with total renewable capacity, capped. */
-export function curtailmentRate(capacityGw: number, cfg: ForecastConfig): number {
-  const rate =
-    cfg.curtailmentBaseRate +
-    cfg.curtailmentSlopePerGw * (capacityGw - cfg.curtailmentRefCapacityGw);
-  return Math.max(0, Math.min(cfg.curtailmentMaxRate, rate));
+export function dispatchDownRate(capacityGw: number, cfg: ForecastConfig): number {
+  const rate = cfg.dispatchDownBaseRate + cfg.dispatchDownSlopePerGw * (capacityGw - cfg.curtailmentRefCapacityGw);
+  return Math.max(0, Math.min(cfg.dispatchDownMaxRate, rate));
 }
 
 export function computeForecast(
@@ -106,42 +98,34 @@ export function computeForecast(
   market: BtcMarket,
 ): ForecastPoint[] {
   const points: ForecastPoint[] = [];
-  const HOURS_PER_YEAR = 8760;
-
+  const startGw = interpolateCapacity(cfg.capacityAnchors, cfg.startYear);
   for (let year = cfg.startYear; year <= cfg.endYear; year++) {
     const baseGw = interpolateCapacity(cfg.capacityAnchors, year);
-    // Apply the scenario pace to growth above the start-year level.
-    const startGw = interpolateCapacity(cfg.capacityAnchors, cfg.startYear);
     const renewableCapacityGw = startGw + (baseGw - startGw) * cfg.pathwayMultiplier;
-
     const renewableGwh = renewableCapacityGw * cfg.capacityFactor * HOURS_PER_YEAR;
-    const demandGwh =
-      cfg.demandStartGwh * Math.pow(1 + cfg.demandGrowth, year - cfg.startYear);
-    const penetrationPct = demandGwh > 0 ? (renewableGwh / demandGwh) * 100 : 0;
+    const rate = dispatchDownRate(renewableCapacityGw, cfg);
+    const dispatchDownGwh = renewableGwh * rate;
+    const absorbedGwh = scenario === 'with_flexible_demand' ? dispatchDownGwh * cfg.flexibleAbsorbedShare : 0;
 
-    const rate = curtailmentRate(renewableCapacityGw, cfg);
-    const curtailmentGwh = renewableGwh * rate;
-
-    const recoveredGwh =
-      scenario === 'with_mining' ? curtailmentGwh * cfg.miningAbsorbedShare : 0;
-
-    // Feed recovered energy through the BTC model (MWh over one year).
-    const btc = computeBtcSavings(recoveredGwh * 1000, HOURS_PER_YEAR, assumptions, market);
-    const savingPerHouseholdEur =
-      assumptions.nHouseholds > 0 ? btc.valueEur / assumptions.nHouseholds : 0;
-
+    const t = year - cfg.startYear;
+    const blockRewardBtc = averageBlockReward(year);
+    const yearMarket: BtcMarket = {
+      ...market,
+      blockRewardBtc,
+      networkHashrateThs: market.networkHashrateThs * Math.pow(1 + cfg.networkGrowth, t),
+      priceEur: market.priceEur * Math.pow(1 + cfg.priceGrowth, t),
+    };
+    const revenue = computeMiningRevenue(absorbedGwh * 1000, HOURS_PER_YEAR, assumptions, yearMarket);
     points.push({
       year,
       renewableCapacityGw,
-      penetrationPct,
       renewableGwh,
-      curtailmentRate: rate,
-      curtailmentGwh,
-      recoveredGwh,
-      recoveredValueEur: btc.valueEur,
-      savingPerHouseholdEur,
+      dispatchDownRate: rate,
+      dispatchDownGwh,
+      absorbedGwh,
+      blockRewardBtc,
+      grossRevenueEur: revenue.revenueEur,
     });
   }
-
   return points;
 }

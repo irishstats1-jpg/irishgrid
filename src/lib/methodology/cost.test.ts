@@ -1,46 +1,44 @@
 import { describe, it, expect } from 'vitest';
-import { computeCost, computeReplacementCost, DEFAULT_COST_ASSUMPTIONS } from './cost';
-import { DEFAULT_ASSUMPTIONS } from './constants';
+import { computeCost, computeCostRange, computeReplacementCost, COST_CASES } from './cost';
 
-const C = { ...DEFAULT_COST_ASSUMPTIONS };
-const D = { nBillpayers: DEFAULT_ASSUMPTIONS.nBillpayers, nPeople: DEFAULT_ASSUMPTIONS.nPeople };
+const C = COST_CASES.central;
 
 describe('computeCost', () => {
-  it('uses the split-aware model when curtailment/constraint are provided', () => {
-    const r = computeCost(
-      { totalMwh: 1000, curtailmentMwh: 800, constraintMwh: 200 },
-      C,
-      D,
-    );
-    // 800*0.2 + 200*0.95 = 160 + 190 = 350 MWh compensated.
+  it('compensates constraint and curtailment at different shares', () => {
+    const r = computeCost(1000, 0.2, C);
+    // 200 constraint × 0.95 + 800 curtailment × 0.2 = 190 + 160 = 350 MWh.
     expect(r.compensatedMwh).toBeCloseTo(350, 6);
-    expect(r.costEur).toBeCloseTo(350 * C.compensationPriceEurPerMwh, 4);
+    expect(r.costEur).toBeCloseTo(350 * C.compensationEurPerMwh, 4);
   });
 
-  it('does NOT compensate all dispatched-down energy (the key nuance)', () => {
-    const r = computeCost(
-      { totalMwh: 1000, curtailmentMwh: 800, constraintMwh: 200 },
-      C,
-      D,
-    );
-    expect(r.compensatedMwh).toBeLessThan(r.totalWastedMwh);
+  it('never compensates all of the volume in the central case', () => {
+    expect(computeCost(1000, 0.5, C).compensatedMwh).toBeLessThan(1000);
   });
 
-  it('falls back to the blended share when no split is available', () => {
-    const r = computeCost({ totalMwh: 1000 }, C, D);
-    expect(r.compensatedMwh).toBeCloseTo(1000 * C.compensatedShareBlended, 6);
+  it('uses the case’s default split when the split is not reported', () => {
+    const r = computeCost(1000, null, C);
+    expect(r.constraintShare).toBe(C.defaultConstraintShare);
   });
 
-  it('computes per-billpayer and per-person costs from denominators', () => {
-    const r = computeCost({ totalMwh: 100_000 }, C, D);
-    expect(r.costPerBillpayerEur).toBeCloseTo(r.costEur / D.nBillpayers, 6);
-    expect(r.costPerPersonEur).toBeCloseTo(r.costEur / D.nPeople, 6);
-    expect(r.costPerPersonEur).toBeLessThan(r.costPerBillpayerEur);
+  it('treats negative volume as zero and clamps the split', () => {
+    expect(computeCost(-5, 0.5, C).costEur).toBe(0);
+    expect(computeCost(1000, 2, C).constraintShare).toBe(1);
+  });
+});
+
+describe('computeCostRange', () => {
+  it('orders low ≤ central ≤ high', () => {
+    for (const share of [null, 0, 0.5, 1]) {
+      const r = computeCostRange(1_266_000, share);
+      expect(r.low).toBeLessThanOrEqual(r.central);
+      expect(r.central).toBeLessThanOrEqual(r.high);
+    }
   });
 
-  it('treats negative volume as zero', () => {
-    const r = computeCost({ totalMwh: -5 }, C, D);
-    expect(r.costEur).toBe(0);
+  it('gives tens of millions of euro for the 2024 volume', () => {
+    const r = computeCostRange(1_266_000, 0.5);
+    expect(r.central).toBeGreaterThan(20e6);
+    expect(r.central).toBeLessThan(150e6);
   });
 });
 

@@ -1,53 +1,44 @@
 {
   "brand": {
     "name": "Eangach na hÉireann",
-    "tagline": "Cuir níos lú amú. Íoc níos lú. Tóg níos mó fuinnimh ghlain.",
-    "independence": "Neamhspleách. Gan bhaint le EirGrid ná SONI.",
-    "wordmark": "EANGACH NA hÉIREANN"
+    "tagline": "Tá Éire ag íoc as cumhacht ghlan nach n-úsáideann sí.",
+    "independence": "Is suíomh taighde agus abhcóideachta neamhspleách, neamhpháirtíneach é Eangach na hÉireann. Níl aon bhaint aige le EirGrid ná le SONI.",
+    "wordmark": "Eangach na hÉireann",
+    "descriptor": "Fianaise neamhspleách ar eangach leictreachais na hÉireann"
   },
   "nav": {
-    "home": "An Fhadhb",
+    "home": "An fhadhb",
     "curtailment": "Íocaíochtaí ciorraithe",
-    "proposal": "An Réiteach",
+    "proposal": "An rogha beartais",
     "forecast": "Réamhaisnéis",
     "getInvolved": "Bí Páirteach",
     "blog": "Blag",
-    "about": "Fúinn & Modheolaíocht",
+    "about": "Fúinn",
     "press": "Preas",
     "pledge": "Gealltanas",
     "data": "Sonraí",
-    "bitcoin": "An Líonra Bitcoin"
+    "bitcoin": "An t-ualach solúbtha",
+    "methodology": "Modh",
+    "briefs": "Páipéir"
   },
   "common": {
     "estimate": "Samhaltaithe",
     "actual": "Tuairiscithe",
     "notFinancialAdvice": "Ní comhairle airgeadais ná infheistíochta é seo.",
-    "perBillpayer": "in aghaidh an íocóra billí",
-    "perPerson": "in aghaidh an duine",
     "learnMore": "Tuilleadh eolais",
     "readMethodology": "Léigh an mhodheolaíocht",
     "loading": "Á lódáil…"
   },
-  "durations": {
-    "yesterday": "Inné",
-    "last_week": "An tseachtain seo caite",
-    "last_month": "An mhí seo caite",
-    "last_365": "365 lá anuas",
-    "2025": "2025",
-    "2024": "2024",
-    "2023": "2023",
-    "2022": "2022"
-  },
   "footer": {
     "independenceTitle": "Neamhspleách",
-    "independenceBody": "Is suíomh neamhspleách é Eangach na hÉireann. Níl aon bhaint aige le EirGrid ná le SONI.",
+    "independenceBody": "Is suíomh taighde agus abhcóideachta neamhspleách, neamhpháirtíneach é Eangach na hÉireann. Níl aon bhaint aige le EirGrid ná le SONI.",
     "financialTitle": "† Figiúirí Bitcoin",
-    "financialBody": "Meastachán léiritheach ag praghas BTC agus deacracht an líonra ar an dáta a thaispeántar. Ní comhairle airgeadais é.",
-    "estimatesTitle": "Gach figiúr lena bhunús",
-    "estimatesBody": "Tá tréimhse agus foinse ag gach figiúr. Tuairiscítear méideanna bliantúla i dtuarascálacha Srianta & Ciorraithe EirGrid; tá tréimhsí gearra agus gach costas samhaltaithe (≈).",
+    "financialBody": "Ioncam comhlán samhaltaithe ag praghas BTC agus ráta haiseála an líonra ar an dáta a thaispeántar, roimh chostais. Ní comhairle airgeadais é.",
+    "estimatesTitle": "Bunús le gach figiúr",
+    "estimatesBody": "Taispeántar tréimhse agus foinse gach figiúir. Tuairiscítear na méideanna i dtuarascálacha bliantúla Srianta agus Ciorraithe EirGrid agus SONI; tá costais agus figiúirí Bitcoin samhaltaithe (≈) le toimhdí foilsithe.",
     "sourcesTitle": "Foinsí sonraí",
     "contactTitle": "Teagmháil",
-    "rights": "© {year} Irish Grid. Tógtha ar shonraí poiblí.",
-    "independenceLine": "Neamhspleách. Gan bhaint le EirGrid ná SONI."
+    "rights": "© {year} Irish Grid. Sonraí CC BY 4.0.",
+    "independenceLine": "Is suíomh taighde agus abhcóideachta neamhspleách, neamhpháirtíneach é Eangach na hÉireann. Níl aon bhaint aige le EirGrid ná le SONI."
   }
 }

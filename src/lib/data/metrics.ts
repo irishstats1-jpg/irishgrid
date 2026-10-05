@@ -1,104 +1,176 @@
-import type { BtcMarket, FuelType, PeriodKey } from '../methodology/types';
+// Annual figures for every page, chart, card and export. One series (Ireland,
+// wind, calendar years — see dispatchDown.ts), one denominator (private
+// households) and a cost RANGE, never a single invented precision.
+//
+// The headline is the latest REPORTED year. A provisional year is shown, but
+// labelled, and never leads.
+
+import type { BtcMarket, PeriodKey } from '../methodology/types';
 import {
+  computeCostRange,
+  computeMiningEconomics,
+  computeReplacementCost,
+  COST_CASES,
   DEFAULT_ASSUMPTIONS,
+  DEFAULT_MINING_COSTS,
   FALLBACK_BTC_MARKET,
-  PERIOD_HOURS,
-  computeBtcSavings,
-  computeCost,
-  DEFAULT_COST_ASSUMPTIONS,
+  WHOLESALE_REF_EUR_PER_MWH,
   type Assumptions,
+  type CostRange,
+  type MiningEconomics,
 } from '../methodology';
-import { buildYearSeries, type DaySeriesPoint } from './series';
-import {
-  ANNUAL_GENERATION_GWH,
-  DISPATCH_DOWN_ACTUALS,
-  type DispatchDownActual,
-} from './dispatchDown';
-import { GENERATORS } from './generators';
+import { ANNUAL_DISPATCH_DOWN, HOUSEHOLDS, type AnnualDispatchDown, type DataMethod } from './dispatchDown';
 import { fetchBtcMarket } from './live';
 
-const FUELS: FuelType[] = ['wind', 'solar', 'gas', 'hydro', 'coal', 'oil', 'other', 'imports'];
+export type FigureMethod = DataMethod;
 
-/**
- * How a period's headline volume was obtained (Brand Book §07, method tags):
- * reported in an EirGrid Constraint & Curtailment report; provisional (a year
- * whose official report isn't out yet, extrapolated from the trend); or
- * modelled from the daily series.
- */
-export type FigureMethod = 'reported' | 'provisional' | 'modelled';
-
-export interface PeriodMetrics {
+export interface YearMetrics {
   periodKey: PeriodKey;
-  isEstimate: boolean;
-  method: FigureMethod;
-  /** Short human source for the basis tag, e.g. "EirGrid C&C report 2024". */
+  year: number;
+  method: DataMethod;
+  /** Short label for basis tags, e.g. "EirGrid C&C report 2024". */
   source: string;
-  producedMwh: number;
-  wastedMwh: number;
-  curtailmentMwh?: number;
-  constraintMwh?: number;
-  sourceBreakdown: Record<FuelType, number>; // MWh by fuel
-  costEur: number;
-  costPerBillpayerEur: number;
-  costPerPersonEur: number;
-  btcValueEur: number;
-  btcMinedNet: number;
-  savingPerBillpayerEur: number;
-  savingPerPersonEur: number;
-  periodHours: number;
-  computedAt: string;
+  sourceTitle: string;
+  sourceUrl: string;
+  notes: string;
+  /** Wind dispatch-down in Ireland, MWh. */
+  windMwh: number;
+  /** Dispatch-down as % of available wind, as reported. */
+  windPctOfAvailable: number | null;
+  /** Constraint share used for the central cost case (0–1). */
+  constraintShare: number;
+  /** True when the split comes from the report rather than an assumption. */
+  constraintShareReported: boolean;
+  constraintMwh: number;
+  curtailmentMwh: number;
+  /** Modelled compensation paid to generators, low / central / high, €. */
+  cost: CostRange;
+  /** The same, per private household (Census 2022), €. */
+  costPerHousehold: CostRange;
+  /** Context only: wholesale value of the CONSTRAINED volume replaced elsewhere, €. */
+  replacementCostEur: number;
+  /** Gross and net mining economics of that volume at the current market snapshot. */
+  mining: MiningEconomics;
 }
 
-// ---- Live context (auto-updating) --------------------------------------------
-// Module-level state refreshed via refreshLiveData(): the BTC market comes from
-// CoinGecko/mempool (Next fetch cache, ~hourly) and dispatch-down actuals from
-// the Supabase `dispatch_down_actuals` table when configured. Both fall back to
-// the in-repo seeds, so nothing breaks when a source is unreachable.
+export function computeYearMetrics(
+  d: AnnualDispatchDown,
+  market: BtcMarket,
+  assumptions: Assumptions = DEFAULT_ASSUMPTIONS,
+): YearMetrics {
+  const windMwh = d.windGwh * 1000;
+  const constraintShare = d.constraintShare ?? COST_CASES.central.defaultConstraintShare;
+  const constraintMwh = windMwh * constraintShare;
+  const cost = computeCostRange(windMwh, d.constraintShare);
+  const perHousehold = (v: number) => v / HOUSEHOLDS.count;
+  return {
+    periodKey: String(d.year) as PeriodKey,
+    year: d.year,
+    method: d.method,
+    source: d.source,
+    sourceTitle: d.sourceTitle,
+    sourceUrl: d.sourceUrl,
+    notes: d.notes,
+    windMwh,
+    windPctOfAvailable: d.windPctOfAvailable,
+    constraintShare,
+    constraintShareReported: d.constraintShare !== null,
+    constraintMwh,
+    curtailmentMwh: windMwh - constraintMwh,
+    cost,
+    costPerHousehold: { low: perHousehold(cost.low), central: perHousehold(cost.central), high: perHousehold(cost.high) },
+    replacementCostEur: computeReplacementCost(constraintMwh, WHOLESALE_REF_EUR_PER_MWH),
+    mining: computeMiningEconomics(windMwh, assumptions, market, DEFAULT_MINING_COSTS),
+  };
+}
 
+/**
+ * Merge database rows into the reviewed seeds. A row may only fill a year that
+ * is missing from the seeds or marked provisional there, and only if the row
+ * itself is a reported figure — so a bad write can never overwrite a reported
+ * number on the site.
+ */
+export function mergeAnnual(seeds: AnnualDispatchDown[], rows: AnnualDispatchDown[]): AnnualDispatchDown[] {
+  const byYear = new Map(seeds.map((s) => [s.year, s]));
+  for (const r of rows) {
+    if (r.method !== 'reported') continue;
+    const seed = byYear.get(r.year);
+    if (seed && seed.method === 'reported') continue;
+    byYear.set(r.year, r);
+  }
+  return Array.from(byYear.values()).sort((a, b) => a.year - b.year);
+}
+
+// ---- Live inputs ---------------------------------------------------------------
+// Module state, refreshed at most hourly per isolate. Both sources fall back to
+// the dated seeds; pages show which one is in use.
+
+const TTL_MS = 60 * 60 * 1000;
 let _market: BtcMarket = { ...FALLBACK_BTC_MARKET };
-let _actuals: DispatchDownActual[] = DISPATCH_DOWN_ACTUALS;
+let _marketAt = 0;
+let _annual: AnnualDispatchDown[] = ANNUAL_DISPATCH_DOWN;
+let _annualAt = 0;
 
-async function fetchActualsFromSupabase(): Promise<DispatchDownActual[] | null> {
+function rowToAnnual(r: Record<string, unknown>): AnnualDispatchDown | null {
+  const year = Number(r.year);
+  const gwh = Number(r.gwh);
+  if (!Number.isInteger(year) || !(gwh > 0)) return null;
+  const constraint = Number(r.constraint_gwh);
+  const pct = r.wind_pct === null || r.wind_pct === undefined ? null : Number(r.wind_pct);
+  const source = String(r.source ?? '');
+  return {
+    year,
+    method: r.method === 'reported' ? 'reported' : 'provisional',
+    windGwh: gwh,
+    windPctOfAvailable: pct !== null && Number.isFinite(pct) ? pct : null,
+    constraintShare: constraint > 0 && constraint <= gwh ? constraint / gwh : null,
+    source,
+    sourceTitle: source,
+    sourceUrl: String(r.source_url ?? ''),
+    notes: String(r.notes ?? ''),
+  };
+}
+
+async function fetchAnnualFromSupabase(): Promise<AnnualDispatchDown[] | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
   try {
-    const res = await fetch(`${url}/rest/v1/dispatch_down_actuals?select=*&order=year.asc`, {
+    const res = await fetch(`${url}/rest/v1/dispatch_down_actuals?select=*&region=eq.ROI&order=year.asc`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
       next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const rows = (await res.json()) as Array<Record<string, unknown>>;
-    if (!Array.isArray(rows) || rows.length === 0) return null;
-    return rows.map((r) => ({
-      year: Number(r.year),
-      region: 'ROI' as const,
-      source: String(r.source ?? ''),
-      gwh: Number(r.gwh ?? 0),
-      curtailmentGwh: Number(r.curtailment_gwh ?? 0),
-      constraintGwh: Number(r.constraint_gwh ?? 0),
-      windDispatchDownPct: 0,
-      notes: String(r.notes ?? ''),
-    }));
+    if (!Array.isArray(rows)) return null;
+    return rows.map(rowToAnnual).filter((r): r is AnnualDispatchDown => r !== null);
   } catch {
     return null;
   }
 }
 
-/**
- * Refresh the live inputs (call from server components / route handlers before
- * computing metrics). Safe to call often — underlying fetches are cached.
- */
+/** Refresh live inputs (call from server components and route handlers). */
 export async function refreshLiveData(): Promise<void> {
-  const [market, actuals] = await Promise.all([fetchBtcMarket(), fetchActualsFromSupabase()]);
-  _market = market;
-  if (actuals) {
-    // DB rows override seeds per-year; seeds fill any missing years.
-    const byYear = new Map<number, DispatchDownActual>();
-    for (const a of DISPATCH_DOWN_ACTUALS) byYear.set(a.year, a);
-    for (const a of actuals) byYear.set(a.year, a);
-    _actuals = Array.from(byYear.values()).sort((a, b) => a.year - b.year);
+  const now = Date.now();
+  const tasks: Promise<void>[] = [];
+  if (now - _marketAt > TTL_MS) {
+    tasks.push(
+      fetchBtcMarket().then((m) => {
+        _market = m ?? { ...FALLBACK_BTC_MARKET };
+        _marketAt = now;
+      }),
+    );
   }
+  if (now - _annualAt > TTL_MS) {
+    tasks.push(
+      fetchAnnualFromSupabase().then((rows) => {
+        _annual = rows && rows.length ? mergeAnnual(ANNUAL_DISPATCH_DOWN, rows) : ANNUAL_DISPATCH_DOWN;
+        _annualAt = now;
+      }),
+    );
+  }
+  await Promise.all(tasks);
 }
 
 export function getAssumptions(): Assumptions {
@@ -109,190 +181,18 @@ export function getBtcMarket(): BtcMarket {
   return { ..._market };
 }
 
-function getActual(year: number): DispatchDownActual | undefined {
-  return _actuals.find((a) => a.year === year);
-}
-
-// Reference "now" is fixed to today's date so SSR is deterministic per day.
-function referenceDate(): Date {
-  return new Date();
-}
-
-let _series: DaySeriesPoint[] | null = null;
-export function getSeries(): DaySeriesPoint[] {
-  if (!_series) _series = buildYearSeries(referenceDate());
-  return _series;
-}
-
-function sliceForPeriod(periodKey: PeriodKey): DaySeriesPoint[] {
-  const s = getSeries();
-  switch (periodKey) {
-    case 'yesterday':
-      return s.slice(-1);
-    case 'last_week':
-      return s.slice(-7);
-    case 'last_month':
-      return s.slice(-30);
-    case 'last_365':
-      return s;
-    default:
-      return s; // year keys handled separately
-  }
-}
-
-const YEAR_KEYS = new Set<PeriodKey>(['2022', '2023', '2024', '2025']);
-
-/** Compute (and would-cache) metrics for a duration key. */
-export function computePeriodMetrics(periodKey: PeriodKey): PeriodMetrics {
-  const assumptions = getAssumptions();
+/** All years, newest first. */
+export function getAllYears(): YearMetrics[] {
   const market = getBtcMarket();
-  const periodHours = PERIOD_HOURS[periodKey] ?? 24 * 7;
-  const denominators = { nBillpayers: assumptions.nBillpayers, nPeople: assumptions.nPeople };
-
-  if (YEAR_KEYS.has(periodKey)) {
-    // ---- Official annual actuals (§7.1) ----
-    const year = Number(periodKey);
-    const actual = getActual(year);
-    const producedGwh = ANNUAL_GENERATION_GWH[year] ?? 33_000;
-    const wastedMwh = (actual?.gwh ?? 0) * 1000;
-    const curtailmentMwh = actual ? actual.curtailmentGwh * 1000 : undefined;
-    const constraintMwh = actual ? actual.constraintGwh * 1000 : undefined;
-
-    const cost = computeCost(
-      { totalMwh: wastedMwh, curtailmentMwh, constraintMwh },
-      DEFAULT_COST_ASSUMPTIONS,
-      denominators,
-    );
-    const btc = computeBtcSavings(wastedMwh, periodHours, assumptions, market);
-
-    const reported = !!actual && !/^provisional/i.test(actual.source);
-    return {
-      periodKey,
-      isEstimate: !reported,
-      method: reported ? 'reported' : 'provisional',
-      source: reported ? `EirGrid C&C report ${year}` : `Extrapolated from the ${year - 3}–${year - 1} trend`,
-      producedMwh: producedGwh * 1000,
-      wastedMwh,
-      curtailmentMwh,
-      constraintMwh,
-      sourceBreakdown: annualBreakdown(producedGwh * 1000),
-      costEur: cost.costEur,
-      costPerBillpayerEur: cost.costPerBillpayerEur,
-      costPerPersonEur: cost.costPerPersonEur,
-      btcValueEur: btc.valueEur,
-      btcMinedNet: btc.btcMinedNet,
-      savingPerBillpayerEur: btc.savingPerBillpayerEur,
-      savingPerPersonEur: btc.savingPerPersonEur,
-      periodHours,
-      computedAt: new Date().toISOString(),
-    };
-  }
-
-  // ---- Modelled estimates from the synthetic/live series (§7.1) ----
-  const slice = sliceForPeriod(periodKey);
-  const breakdown = emptyBreakdown();
-  let producedMwh = 0;
-  let wastedMwh = 0;
-  for (const d of slice) {
-    for (const f of FUELS) {
-      breakdown[f] += d.produced[f];
-      producedMwh += d.produced[f];
-    }
-    wastedMwh += Math.max(0, d.windAvailableMwh - d.produced.wind);
-  }
-
-  const cost = computeCost({ totalMwh: wastedMwh }, DEFAULT_COST_ASSUMPTIONS, denominators);
-  const hours = slice.length * 24;
-  const btc = computeBtcSavings(wastedMwh, hours, assumptions, market);
-
-  return {
-    periodKey,
-    isEstimate: true,
-    method: 'modelled',
-    source: 'Modelled daily series',
-    producedMwh,
-    wastedMwh,
-    sourceBreakdown: breakdown,
-    costEur: cost.costEur,
-    costPerBillpayerEur: cost.costPerBillpayerEur,
-    costPerPersonEur: cost.costPerPersonEur,
-    btcValueEur: btc.valueEur,
-    btcMinedNet: btc.btcMinedNet,
-    savingPerBillpayerEur: btc.savingPerBillpayerEur,
-    savingPerPersonEur: btc.savingPerPersonEur,
-    periodHours: hours,
-    computedAt: new Date().toISOString(),
-  };
+  return _annual.map((d) => computeYearMetrics(d, market)).sort((a, b) => b.year - a.year);
 }
 
-/** Fuel-mix time-series for charts (daily points; year keys return a stub). */
-export function getFuelMixSeries(periodKey: PeriodKey) {
-  if (YEAR_KEYS.has(periodKey)) return [];
-  return sliceForPeriod(periodKey).map((d) => ({
-    date: d.date,
-    ...d.produced,
-    wasted: Math.max(0, d.windAvailableMwh - d.produced.wind),
-  }));
+export function getYear(year: number): YearMetrics | undefined {
+  return getAllYears().find((y) => y.year === year);
 }
 
-/**
- * Modelled live output for a single generator (§5.1 data note). EirGrid
- * publishes live fuel mix at SYSTEM level, not per plant — so each plant's
- * output is estimated by pro-rating its fuel type's system generation across
- * installed capacity. Always labelled "estimated" on-site.
- */
-export function getGeneratorModelledOutput(generatorId: string, periodKey: PeriodKey) {
-  const gen = GENERATORS.find((g) => g.id === generatorId);
-  if (!gen) return null;
-  const metrics = computePeriodMetrics(periodKey);
-  const fuelSystemMwh = metrics.sourceBreakdown[gen.fuelType] ?? 0;
-
-  const fuelInstalledMw = GENERATORS
-    .filter((g) => g.fuelType === gen.fuelType)
-    .reduce((sum, g) => sum + g.capacityMw, 0);
-
-  const share = fuelInstalledMw > 0 ? gen.capacityMw / fuelInstalledMw : 0;
-  const modelledOutputMwh = fuelSystemMwh * share;
-
-  // Wasted energy attributable to this plant (wind only in the estimate model).
-  const attributableWastedMwh = gen.fuelType === 'wind' ? metrics.wastedMwh * share : 0;
-
-  return {
-    generator: gen,
-    modelledOutputMwh,
-    attributableWastedMwh,
-    isEstimate: true,
-  };
+/** The latest year with a REPORTED figure — the only year a headline uses. */
+export function getHeadlineYear(): YearMetrics {
+  const years = getAllYears();
+  return years.find((y) => y.method === 'reported') ?? years[0];
 }
-
-function emptyBreakdown(): Record<FuelType, number> {
-  return { wind: 0, solar: 0, gas: 0, hydro: 0, coal: 0, oil: 0, other: 0, imports: 0 };
-}
-
-// Rough annual fuel-mix shares for year views (produced total → breakdown).
-function annualBreakdown(totalMwh: number): Record<FuelType, number> {
-  const shares: Record<FuelType, number> = {
-    wind: 0.34,
-    gas: 0.42,
-    solar: 0.03,
-    hydro: 0.02,
-    coal: 0.05,
-    oil: 0.01,
-    other: 0.03,
-    imports: 0.1,
-  };
-  const out = emptyBreakdown();
-  for (const f of FUELS) out[f] = Math.round(totalMwh * shares[f]);
-  return out;
-}
-
-export const ALL_PERIODS: PeriodKey[] = [
-  'yesterday',
-  'last_week',
-  'last_month',
-  'last_365',
-  '2025',
-  '2024',
-  '2023',
-  '2022',
-];

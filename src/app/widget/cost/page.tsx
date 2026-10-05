@@ -1,22 +1,27 @@
-import { computePeriodMetrics, refreshLiveData } from '@/lib/data/metrics';
-import { eur, energy } from '@/lib/format';
+import { getHeadlineYear, refreshLiveData } from '@/lib/data/metrics';
+import { eurModel, eurRange, gwh, pct } from '@/lib/format';
 
 export const revalidate = 3600;
 
-// "Live wasted-energy cost" counter widget (§14). Embed:
-// <iframe src="https://irishgrid.com/widget/cost" width="360" height="200" style="border:0"></iframe>
+// Key-figures widget. Embed:
+// <iframe src="https://irishgrid.com/widget/cost" width="360" height="260" style="border:0"></iframe>
 export default async function CostWidget() {
   await refreshLiveData();
-  const m = computePeriodMetrics('last_365');
+  const y = getHeadlineYear();
   return (
     <div className="rounded-sm bg-peat p-5 text-white" style={{ maxWidth: 360 }}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-green-300">Irish Grid · last 365 days</p>
-      <p className="mt-2 text-3xl font-semibold">{energy(m.wastedMwh)}</p>
-      <p className="text-sm text-white/90">clean energy wasted</p>
-      <p className="mt-3 text-2xl font-semibold text-green-300">{eur(m.costEur, { compact: true })}</p>
-      <p className="text-sm text-white/90">cost to billpayers</p>
-      <a href="https://irishgrid.com" target="_blank" rel="noopener noreferrer" className="mt-3 block text-xs text-green-300 hover:underline">
-        irishgrid.com — modelled · not financial advice
+      <p className="text-xs font-semibold uppercase tracking-wide text-green-300">Irish Grid · Ireland · {y.year}</p>
+      <p className="mt-2 text-3xl font-semibold">{gwh(y.windMwh)}</p>
+      <p className="text-sm text-white/90">
+        of wind power turned away
+        {y.windPctOfAvailable !== null ? ` (${pct(y.windPctOfAvailable)} of available)` : ''} · reported by EirGrid
+      </p>
+      <p className="mt-3 text-2xl font-semibold text-green-300">≈ {eurModel(y.cost.central)}</p>
+      <p className="text-sm text-white/90">
+        compensation, modelled (range {eurRange(y.cost.low, y.cost.high)})
+      </p>
+      <a href="https://irishgrid.com/methodology" target="_blank" rel="noopener noreferrer" className="mt-3 block text-xs text-green-300 hover:underline">
+        irishgrid.com · how these figures are made
       </a>
     </div>
   );

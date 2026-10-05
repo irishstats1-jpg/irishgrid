@@ -7,199 +7,118 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import { FUEL_COLORS, FUEL_LABELS } from '@/lib/data/generators';
-import type { FuelType } from '@/lib/methodology/types';
 
-// Brand Book §04: green is the grid (waste, cost), orange is the Bitcoin
-// counterpart — and only that. Fossil generation is grey (see FUEL_COLORS).
-export const BRAND = { green: '#169B62', greenText: '#0D6440', orange: '#F7931A', orangeText: '#9C5306', rule: '#E6E7E8' } as const;
+// Brand Book v2.0: green is the grid (waste, cost), orange is the Bitcoin
+// counterpart — and only that.
+export const BRAND = {
+  green: '#169B62',
+  greenText: '#0B623D',
+  greenLight: '#A8DCC1',
+  orange: '#F7931A',
+  orangeText: '#9A5200',
+  ink: '#1D1F20',
+  rule: '#E6E7E8',
+} as const;
 
-// Grouped for readability: coal/oil are folded into "other" upstream.
-const RENEWABLE_ORDER: FuelType[] = ['wind', 'solar', 'hydro', 'imports', 'gas', 'other'];
-
-/** Stacked area of fuel mix over time (MWh/day). */
-export function FuelMixChart({ data }: { data: Array<Record<string, number | string>> }) {
-  return (
-    <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#E6E7E8" vertical={false} />
-        <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={40} />
-        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
-        <Tooltip formatter={(v: number, n) => [`${Math.round(v).toLocaleString()} MWh`, FUEL_LABELS[n as FuelType] ?? n]} />
-        <Legend formatter={(v) => FUEL_LABELS[v as FuelType] ?? v} wrapperStyle={{ fontSize: 12 }} />
-        {RENEWABLE_ORDER.map((f) => (
-          <Area key={f} type="monotone" dataKey={f} stackId="1" stroke={FUEL_COLORS[f]} fill={FUEL_COLORS[f]} fillOpacity={0.75} />
-        ))}
-      </AreaChart>
-    </ResponsiveContainer>
-  );
+export interface YearBar {
+  year: number;
+  gwh: number;
+  pct: number | null;
+  provisional: boolean;
 }
 
-/** Line/area of a single trend series. */
-export function TrendChart({
+/** Annual wind dispatch-down, one bar per year; provisional years are pale. */
+export function DispatchDownBars({
   data,
-  dataKey,
-  color = BRAND.green,
-  yFormat = (v) => Math.round(v).toLocaleString(),
-  area = true,
+  selectedYear,
+  onSelect,
 }: {
-  data: Array<Record<string, number | string>>;
-  dataKey: string;
-  color?: string;
-  yFormat?: (v: number) => string;
-  area?: boolean;
+  data: YearBar[];
+  selectedYear?: number;
+  onSelect?: (year: number) => void;
 }) {
-  const Comp = area ? AreaChart : LineChart;
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <Comp data={data} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#E6E7E8" vertical={false} />
-        <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={40} />
-        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => yFormat(Number(v))} width={48} />
-        <Tooltip formatter={(v: number) => yFormat(v)} />
-        {area ? (
-          <Area type="monotone" dataKey={dataKey} stroke={color} fill={color} fillOpacity={0.25} />
-        ) : (
-          <Line type="monotone" dataKey={dataKey} stroke={color} dot={false} strokeWidth={2} />
-        )}
-      </Comp>
-    </ResponsiveContainer>
-  );
-}
-
-/** Small donut for the stats panel fuel mix. */
-export function FuelMixDonut({ breakdown }: { breakdown: Record<FuelType, number> }) {
-  const data = (Object.keys(breakdown) as FuelType[])
-    .filter((f) => breakdown[f] > 0)
-    .map((f) => ({ name: FUEL_LABELS[f], value: breakdown[f], fuel: f }));
-  // The legend is rendered as normal-flow HTML below the chart rather than via
-  // Recharts' absolutely-positioned <Legend>, which overflows its container when
-  // it wraps to two rows and overlaps the stats beneath it.
-  return (
-    <div className="mt-1">
-      <ResponsiveContainer width="100%" height={170}>
-        <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={72} paddingAngle={1}>
-            {data.map((d) => (
-              <Cell key={d.fuel} fill={FUEL_COLORS[d.fuel]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(v: number) => `${Math.round(v).toLocaleString()} MWh`} />
-        </PieChart>
-      </ResponsiveContainer>
-      <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs text-ink-700">
-        {data.map((d) => (
-          <li key={d.fuel} className="flex items-center gap-1.5">
-            <span
-              className="inline-block h-2.5 w-2.5 shrink-0"
-              style={{ backgroundColor: FUEL_COLORS[d.fuel] }}
-              aria-hidden
-            />
-            {d.name}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-/** Two-series money view: what waste cost vs what it could have earned. */
-export function MoneyChart({
-  data,
-}: {
-  data: Array<{ date: string; cost: number; saved: number }>;
-}) {
-  return (
-    <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#E6E7E8" vertical={false} />
-        <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={24} />
-        <YAxis
-          tick={{ fontSize: 12 }}
-          tickFormatter={(v) => `€${Math.round(Number(v) / 1e6)}m`}
-          width={52}
-        />
+      <BarChart data={data} margin={{ top: 24, right: 8, bottom: 0, left: 0 }}>
+        <CartesianGrid stroke={BRAND.rule} vertical={false} />
+        <XAxis dataKey="year" tick={{ fontSize: 12 }} tickLine={false} />
+        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Number(v).toLocaleString('en-IE')}`} width={44} />
         <Tooltip
-          formatter={(v: number, n) => [
-            `€${Math.round(v).toLocaleString()}`,
-            n === 'cost' ? 'Paid out for wasted energy' : 'Value if the surplus had been mined†',
-          ]}
+          cursor={{ fill: '#F2F2F3' }}
+          formatter={(v: number, _n, item) => {
+            const p = item?.payload as YearBar | undefined;
+            const pct = p?.pct !== null && p?.pct !== undefined ? ` (${p.pct}% of available wind)` : '';
+            return [`${Math.round(v).toLocaleString('en-IE')} GWh${pct}`, p?.provisional ? 'Provisional' : 'Reported'];
+          }}
         />
-        <Legend
-          formatter={(v) => (v === 'cost' ? 'Paid out for wasted energy' : 'Value if the surplus had been mined†')}
-          wrapperStyle={{ fontSize: 12 }}
-        />
-        <Area type="monotone" dataKey="cost" stroke={BRAND.green} fill={BRAND.green} fillOpacity={0.2} strokeWidth={2} />
-        <Area type="monotone" dataKey="saved" stroke={BRAND.orange} fill={BRAND.orange} fillOpacity={0.25} strokeWidth={2} />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-}
-
-/** Side-by-side comparison bars (as-is cost vs BTC recovered value). */
-export function ComparisonBars({
-  data,
-}: {
-  data: Array<{ label: string; value: number; color: string }>;
-}) {
-  return (
-    <ResponsiveContainer width="100%" height={240}>
-      <BarChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#E6E7E8" vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${(Number(v) / 1e6).toFixed(0)}m`} width={52} />
-        <Tooltip formatter={(v: number) => `€${Math.round(v).toLocaleString()}`} />
-        <Bar dataKey="value">
-          {data.map((d, i) => (
-            <Cell key={i} fill={d.color} />
+        <Bar
+          dataKey="gwh"
+          onClick={(d: { year?: number }) => d?.year && onSelect?.(d.year)}
+          style={onSelect ? { cursor: 'pointer' } : undefined}
+          isAnimationActive={false}
+        >
+          {data.map((d) => (
+            <Cell
+              key={d.year}
+              fill={d.provisional ? BRAND.greenLight : BRAND.green}
+              stroke={d.year === selectedYear ? BRAND.ink : d.provisional ? BRAND.green : 'none'}
+              strokeWidth={d.year === selectedYear ? 2 : 1}
+              strokeDasharray={d.provisional && d.year !== selectedYear ? '4 3' : undefined}
+            />
           ))}
+          <LabelList
+            dataKey="gwh"
+            position="top"
+            formatter={(v: number) => Math.round(v).toLocaleString('en-IE')}
+            style={{ fontSize: 12, fill: BRAND.ink }}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
 }
 
-/** Forecast dual-line chart: curtailment curve + recovered/savings. */
+/** Scenario chart: dispatch-down on a business-as-usual grid vs the share flexible demand uses. */
 export function ForecastChart({
   data,
 }: {
-  data: Array<{ year: number; curtailmentGwh: number; recoveredGwh: number }>;
+  data: Array<{ year: number; dispatchDownGwh: number; absorbedGwh: number }>;
 }) {
+  const label = (n: unknown) => (n === 'dispatchDownGwh' ? 'Dispatch-down (business as usual)' : 'Used by flexible demand');
   return (
-    <ResponsiveContainer width="100%" height={320}>
+    <ResponsiveContainer width="100%" height={300}>
       <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#E6E7E8" vertical={false} />
+        <CartesianGrid stroke={BRAND.rule} vertical={false} />
         <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(Number(v) / 1000)} TWh`} width={56} />
-        <Tooltip formatter={(v: number, n) => [`${Math.round(v).toLocaleString()} GWh`, n === 'curtailmentGwh' ? 'Curtailment (business as usual)' : 'Recovered if mined†']} />
-        <Legend formatter={(v) => (v === 'curtailmentGwh' ? 'Curtailment (business as usual)' : 'Recovered if mined†')} wrapperStyle={{ fontSize: 12 }} />
-        <Area type="monotone" dataKey="curtailmentGwh" stroke={BRAND.green} fill={BRAND.green} fillOpacity={0.3} />
-        <Area type="monotone" dataKey="recoveredGwh" stroke={BRAND.orange} fill={BRAND.orange} fillOpacity={0.45} />
+        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)} TWh`} width={56} />
+        <Tooltip formatter={(v: number, n) => [`${Math.round(v).toLocaleString('en-IE')} GWh`, label(n)]} />
+        <Legend formatter={label} wrapperStyle={{ fontSize: 12 }} />
+        <Area type="monotone" dataKey="dispatchDownGwh" stroke={BRAND.green} fill={BRAND.green} fillOpacity={0.3} isAnimationActive={false} />
+        <Area type="monotone" dataKey="absorbedGwh" stroke={BRAND.orange} fill={BRAND.orange} fillOpacity={0.4} isAnimationActive={false} />
       </AreaChart>
     </ResponsiveContainer>
   );
 }
 
-/** Per-household savings line for the forecast page. */
-export function SavingsChart({ data }: { data: Array<{ year: number; savingPerHouseholdEur: number }> }) {
+/** Gross mining revenue per scenario year (halving-aware), € — before any cost. */
+export function RevenueChart({ data }: { data: Array<{ year: number; grossRevenueEur: number }> }) {
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ResponsiveContainer width="100%" height={260}>
       <LineChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#E6E7E8" vertical={false} />
+        <CartesianGrid stroke={BRAND.rule} vertical={false} />
         <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${Math.round(Number(v))}`} width={52} />
-        <Tooltip formatter={(v: number) => `€${v.toFixed(2)} per household`} />
-        <Line type="monotone" dataKey="savingPerHouseholdEur" stroke={BRAND.orange} dot={false} strokeWidth={2.5} />
+        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${Math.round(Number(v) / 1e6)}M`} width={56} />
+        <Tooltip formatter={(v: number) => [`€${Math.round(v / 1e6).toLocaleString('en-IE')}M`, 'Gross revenue, before costs†']} />
+        <Line type="stepAfter" dataKey="grossRevenueEur" stroke={BRAND.orange} dot={false} strokeWidth={2.5} isAnimationActive={false} />
       </LineChart>
     </ResponsiveContainer>
   );

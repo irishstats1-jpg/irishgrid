@@ -5,10 +5,10 @@ import { Link } from '@/i18n/navigation';
 import { Wordmark } from './Wordmark';
 
 const SOURCES = [
-  { label: 'EirGrid Smart Grid Dashboard', href: 'https://www.smartgriddashboard.com/' },
-  { label: 'EirGrid Constraint & Curtailment Reports', href: 'https://www.eirgrid.ie/' },
-  { label: 'SEMOpx wholesale prices', href: 'https://www.semopx.com/' },
-  { label: 'CoinGecko · mempool.space', href: 'https://www.coingecko.com/' },
+  { label: 'EirGrid & SONI Constraint and Curtailment reports', href: 'https://cms.eirgrid.ie/taxonomy/term/27' },
+  { label: 'CSO Census 2022 (households)', href: 'https://www.cso.ie/en/releasesandpublications/ep/p-cpp3/censusofpopulation2022profile3-householdsfamiliesandchildcare/keyfindings/' },
+  { label: 'CoinGecko (BTC price)', href: 'https://www.coingecko.com/en/coins/bitcoin/eur' },
+  { label: 'mempool.space (hashrate)', href: 'https://mempool.space/graphs/mining/hashrate-difficulty' },
 ];
 
 export function Footer() {
@@ -45,6 +45,7 @@ export function Footer() {
             <Link href="/proposal" className="hover:text-white">{tn('proposal')}</Link>
             <Link href="/get-involved" className="hover:text-white">{tn('getInvolved')}</Link>
             <Link href="/blog" className="hover:text-white">{tn('blog')}</Link>
+            <Link href="/methodology" className="hover:text-white">{tn('methodology')}</Link>
             <Link href="/about" className="hover:text-white">{tn('about')}</Link>
             <Link href="/press" className="hover:text-white">{tn('press')}</Link>
             <Link href="/pledge" className="hover:text-white">{tn('pledge')}</Link>

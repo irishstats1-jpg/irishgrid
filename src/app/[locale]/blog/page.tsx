@@ -21,7 +21,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((p) => (
             <Link key={p.slug} href={`/blog/${p.slug}`} className="card block transition hover:shadow-md">
-              <p className="text-xs text-ink-500">{new Date(p.publishedAt).toLocaleDateString('en-IE', { dateStyle: 'medium' })} · {p.author}</p>
+              <p className="text-xs text-ink-500">{new Date(p.publishedAt).toLocaleDateString('en-IE', { dateStyle: 'medium', timeZone: 'UTC' })} · {p.author}</p>
               <h2 className="mt-2 text-lg font-semibold text-ink">{p.title}</h2>
               <p className="prose-body mt-2 line-clamp-3">{p.excerpt}</p>
               <span className="mt-3 inline-block text-sm font-medium text-green-700">Read →</span>

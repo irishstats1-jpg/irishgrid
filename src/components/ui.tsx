@@ -38,15 +38,6 @@ export function TagRow({ tags, className = '' }: { tags: TagSpec[]; className?: 
   );
 }
 
-/** Method tag for a period's headline volume: reported (EirGrid C&C) or modelled. */
-export function EstimateBadge({ label = 'Modelled' }: { label?: string }) {
-  return <BasisTag kind="method">{label}</BasisTag>;
-}
-
-export function ActualBadge({ label = 'Reported' }: { label?: string }) {
-  return <BasisTag kind="method">{label}</BasisTag>;
-}
-
 // ---- Frames ------------------------------------------------------------------
 
 const CORNERS = [
@@ -135,6 +126,23 @@ function FigureHalf({
   );
 }
 
+/** A single green figure in the brand frame (for figures with no orange counterpart). */
+export function SingleFigure({
+  side,
+  size = 'sm',
+  className = '',
+}: {
+  side: FigureSide;
+  size?: keyof typeof FIGURE_SIZES;
+  className?: string;
+}) {
+  return (
+    <Framed className={`grid ${className}`}>
+      <FigureHalf side={side} tone="green" size={size} stacked />
+    </Framed>
+  );
+}
+
 /** One-line note required wherever two bases appear together (§07 rule 5). */
 export function WhyDiffer({ children }: { children: ReactNode }) {
   return (
@@ -147,17 +155,31 @@ export function WhyDiffer({ children }: { children: ReactNode }) {
 
 // ---- Disclaimers -----------------------------------------------------------------
 
-/** The † Bitcoin disclaimer — wherever orange appears (§08). */
-export function NotFinancialAdvice({ priceEur, asOf }: { priceEur?: number; asOf?: string }) {
+/** The † Bitcoin disclaimer — wherever orange appears (evidence rule 4). */
+export function NotFinancialAdvice({
+  priceEur,
+  asOf,
+  live,
+}: {
+  priceEur?: number;
+  /** Already-formatted date, e.g. "4 October 2026". */
+  asOf?: string;
+  /** False when the stored snapshot is in use because live data was unavailable. */
+  live?: boolean;
+}) {
   const price =
     priceEur !== undefined
-      ? new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(priceEur)
+      ? new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(
+          Math.round(priceEur / 100) * 100,
+        )
       : undefined;
   return (
     <p className="border border-ink-200 bg-white px-3 py-2 text-xs leading-relaxed text-ink-700">
       <span className="font-display font-semibold uppercase tracking-[0.08em] text-orange-700">† Bitcoin figures · </span>
-      Illustrative estimate at the BTC price{price ? ` (${price})` : ''} and network difficulty
-      {asOf ? ` on ${asOf}` : ' on the date shown'}. Not financial advice.
+      Modelled gross revenue at the BTC price{price ? ` (${price})` : ''} and network hashrate
+      {asOf ? ` on ${asOf}` : ' on the date shown'}
+      {live === false ? ' (stored snapshot — live data unavailable)' : ''}, before hardware, power and running costs.
+      Not financial advice.
     </p>
   );
 }

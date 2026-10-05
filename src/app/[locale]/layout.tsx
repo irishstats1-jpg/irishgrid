@@ -22,11 +22,11 @@ export function generateStaticParams() {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://irishgrid.com'),
   title: {
-    default: 'Irish Grid — Waste less. Pay less. Build more clean energy.',
+    default: 'Irish Grid — Independent evidence on Ireland’s electricity grid',
     template: '%s · Irish Grid',
   },
   description:
-    "Independent, data-driven look at the Republic of Ireland's electricity grid: live sources, the clean energy we curtail, what it costs billpayers, and a proposal to turn that waste into value with flexible Bitcoin-mining load. Not affiliated with EirGrid or SONI.",
+    "How much wind power Ireland turns away, what it is likely to cost electricity customers, and options for using the surplus, including flexible demand. Independent and non-partisan; no connection to EirGrid or SONI.",
   openGraph: { type: 'website', siteName: 'Irish Grid' },
   robots: { index: true, follow: true },
   alternates: {

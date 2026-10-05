@@ -6,56 +6,77 @@ export interface BlogPost {
   slug: string;
   title: string;
   excerpt: string;
-  body: string; // markdown-ish; rendered as paragraphs
+  body: string; // plain paragraphs separated by blank lines
   author: string;
   publishedAt: string;
   status: 'published' | 'draft';
+  sources?: Array<{ title: string; url: string }>;
 }
+
+const REPORT_2024 = {
+  title: 'EirGrid & SONI, Annual Renewable Energy Constraint and Curtailment Report 2024 (April 2025)',
+  url: 'https://cms.eirgrid.ie/sites/default/files/publications/Annual-Renewable-Constraint-and-Curtailment-Report-2024-V1.0.pdf',
+};
+const REPORT_2020 = {
+  title: 'EirGrid & SONI, Annual Renewable Energy Constraint and Curtailment Report 2020 (May 2021)',
+  url: 'https://cms.eirgrid.ie/sites/default/files/publications/Annual-Renewable-Constraint-and-Curtailment-Report-2020.pdf',
+};
+
+/** Old slugs that should redirect to a post's current slug. */
+export const POST_ALIASES: Record<string, string> = {
+  'ireland-wasted-a-record-amount-of-wind-in-2024': 'ireland-turned-away-1266-gwh-of-wind-in-2024',
+};
 
 const SEED_POSTS: BlogPost[] = [
   {
-    slug: 'ireland-wasted-a-record-amount-of-wind-in-2024',
-    title: 'Ireland wasted a record amount of wind in 2024 — here’s what it cost',
+    slug: 'ireland-turned-away-1266-gwh-of-wind-in-2024',
+    title: 'Ireland turned away 1,266 GWh of wind power in 2024',
     excerpt:
-      'Across the island, wind dispatch-down hit 14% in 2024 — with 1,266 GWh thrown away in the Republic alone. We break down why, and what it means for bills.',
+      'One in ten units of wind energy available in Ireland in 2024 was dispatched down — the most since 2020. Across the whole island the share was 14%.',
     author: 'Irish Grid',
-    publishedAt: '2025-02-10',
+    publishedAt: '2026-10-05',
     status: 'published',
-    body: `In 2024, the share of available wind energy dispatched down across the island of Ireland reached 14.0% — up from 10.7% in 2023 and 8.5% in 2022. In the Republic alone, 1,266 GWh of wind was thrown away.
+    sources: [REPORT_2024, REPORT_2020],
+    body: `In 2024 the grid operator dispatched down 1,266 GWh of wind energy in Ireland: 10.1% of the wind energy that was available. That is up from 988 GWh (8.3%) in 2022 and 1,124 GWh (8.9%) in 2023, and the most since 2020, when Covid-19 lockdowns cut demand and 1,448 GWh (11.4%) was dispatched down.
 
-Dispatch-down happens for two reasons. Curtailment is system-wide: there is more renewable generation than the grid can safely carry at once, bounded by the System Non-Synchronous Penetration (SNSP) limit. Constraint is local: the transmission network in a given area cannot move the power to where it is needed.
+Across the whole island, including Northern Ireland, the share rose faster: from 8.5% in 2022 to 10.7% in 2023 and 14.0% in 2024.
 
-Either way, the result is the same — clean electricity that was generated but never used, replaced by burning gas. That pushes up both wholesale prices and emissions, and the cost lands on billpayers.
+Dispatch-down happens for two reasons. Curtailment is system-wide: there is more wind and solar than the island can safely run on at once. Constraint is local: the network in one area cannot carry the power to where it is needed. The 2024 report says dispatch-down in Ireland was roughly equally due to each.
 
-The uncomfortable truth is that this problem grows with success: the more wind we build, the more we curtail, unless the grid, storage and flexible demand keep pace.`,
+The two have different consequences. When a constraint turns a wind farm down, another generator — often gas — is turned up elsewhere to meet demand, and constrained generators with firm access are generally compensated. Curtailed power could not have been used at all, and for newer generators it is largely unpaid. Either way, the costs that are paid are recovered from electricity customers.
+
+The share turned away tends to grow as more wind connects, unless the grid, storage and flexible demand keep pace. That is the problem this site is about.`,
   },
   {
     slug: 'what-is-dispatch-down',
-    title: 'Curtailment vs constraint: a plain-English guide to dispatch-down',
-    excerpt: 'The two ways Ireland throws away clean energy — and why they’re paid for differently.',
+    title: 'Curtailment and constraint: a plain-English guide to dispatch-down',
+    excerpt: 'The two ways Ireland turns away clean power — and why they are paid for differently.',
     author: 'Irish Grid',
-    publishedAt: '2025-03-04',
+    publishedAt: '2026-10-05',
     status: 'published',
-    body: `“Dispatch-down” is the umbrella term for any time a generator is told to produce less than it could.
+    sources: [REPORT_2024],
+    body: `“Dispatch-down” is the umbrella term for any time the grid operator tells a generator to produce less than it could.
 
-Curtailment is the system-wide kind. When there’s too much non-synchronous generation (mostly wind) for the whole island to absorb safely, some of it is dialled back. For many newer generators this curtailment is uncompensated.
+Curtailment is the system-wide kind. When there is more wind and solar than the whole island can safely absorb — limited by system stability rules — some of it is turned down. For many newer generators, curtailment is not compensated.
 
-Constraint is the local kind. When the wires in one region can’t carry the power, generators there are constrained off — and this is generally compensated.
+Constraint is the local kind. When the wires in one region cannot carry the power, generators there are turned down, and another generator elsewhere is turned up. Generators with firm grid access are generally compensated for constraint.
 
-That distinction matters for cost. It’s why we separate the wasted volume from the compensated cost, rather than multiplying one big number by a price.`,
+That distinction matters for cost. It is why this site keeps the volume turned away (which is reported) separate from the cost (which is modelled, as a range), rather than multiplying one large number by one price.`,
   },
   {
     slug: 'flexible-load-buyer-of-last-resort',
-    title: 'A buyer of last resort: how flexible load turns waste into value',
-    excerpt: 'Interruptible demand that only runs on surplus can improve renewable economics without competing with consumers.',
+    title: 'A buyer of last resort: how flexible demand could use surplus power',
+    excerpt: 'Demand that runs only on surplus, and stops on instruction, could use power that is now turned away — if the economics and the rules work.',
     author: 'Irish Grid',
-    publishedAt: '2025-04-18',
+    publishedAt: '2026-10-05',
     status: 'published',
-    body: `Imagine a customer who only ever buys electricity that would otherwise be thrown away, and who switches off within seconds the moment anyone else needs it.
+    body: `Imagine a customer that only buys electricity the grid would otherwise turn away, and stops within seconds whenever anyone else needs it.
 
-That’s the role a flexible, interruptible load can play. By paying for otherwise-curtailed output, it gives wind and solar projects revenue for energy they’d otherwise waste — improving their economics and helping more renewables get built.
+That is the role a flexible, interruptible load could play. By paying for power that is now dispatched down, it gives wind farms revenue for energy they currently lose, which makes new projects easier to finance.
 
-Because it consumes only surplus and never competes with homes or industry, it adds no new fossil demand. It’s a buyer of last resort — and Bitcoin mining is one of the few loads that can be sited anywhere, scaled modularly, and interrupted instantly.`,
+Provided it runs only on surplus and stops on instruction, it adds no demand for fossil power and takes no supply from homes or businesses. Making that a condition of connection is one of the policy options on this site.
+
+Batteries, electrolysers and moving existing demand can all play this role. Bitcoin mining is unusual because it can be sited anywhere with a power and internet connection, built in months, and switched off in seconds. Whether it pays is a separate question: a fleet that runs only on surplus sits idle much of the year, and under our central assumptions it does not cover its costs at today's price. The policy option page shows the numbers and lets you change the assumptions.`,
   },
 ];
 
