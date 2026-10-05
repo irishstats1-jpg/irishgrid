@@ -32,58 +32,52 @@ Copy `.env.example` → `.env.local` and fill in what you have. **Nothing is
 required to run** — every external integration degrades gracefully to
 seed/fallback data when its env vars are absent.
 
-## The methodology engine (the heart — `src/lib/methodology/`)
+## The methodology engine (`src/lib/methodology/`)
 
-This is the credibility of the whole site and is fully unit-tested. Every figure
-is derived here with intermediate values exposed so it can be audited on-screen
-(see `/about`).
+Every figure is derived here, unit-tested, and explained on `/methodology`.
 
-- `btc.ts` — BTC-mineable value & per-billpayer savings (§7.3)
-- `cost.ts` — cost to billpayers as compensation/constraint payments, honestly
-  separating wasted **volume** from compensated **cost** (§7.2)
-- `forecast.ts` — 20-year curtailment-growth + per-household-savings scenarios (§7.5)
-- `constants.ts` — transparent default assumptions (§7.4)
+- `btc.ts` — gross mining revenue for a volume of energy, and the net economics
+  of a fleet sized for the hours the surplus is available (break-even price)
+- `cost.ts` — compensation cost as a low / central / high range, using the
+  reported curtailment/constraint split where available
+- `forecast.ts` — 20-year scenario: capacity targets, dispatch-down rate,
+  halving-aware Bitcoin revenue
+- `constants.ts` — default assumptions and the dated market fallback
 
-Run `npm test` — 24 tests cover the engine.
+Run `npm test`.
 
 ## Data layer (`src/lib/data/`)
 
-A clean seam that today serves curated seed data and a deterministic synthetic
-time-series, and in production reads from Supabase / EirGrid:
-
-- `generators.ts` — curated generator set (`isMajor` = default map)
-- `dispatchDown.ts` — annual actuals calibrated to the Constraint & Curtailment reports
-- `series.ts` — deterministic daily fuel-mix series standing in for `generation_snapshots`
-- `metrics.ts` — computes/caches period metrics via the engine
-- `live.ts` — resilient CoinGecko / mempool / EirGrid fetchers for the cron
-
-Short-period figures are **modelled estimates**; year views use **official
-actuals** — labelled throughout.
+- `dispatchDown.ts` — the one series: Ireland, wind, calendar years, from
+  EirGrid/SONI's annual reports (reviewed seeds; a database row can only fill a
+  missing or provisional year, and only with a reported figure)
+- `metrics.ts` — annual figures for every page; headline = latest reported year
+- `live.ts` — CoinGecko + mempool.space snapshot (used only when both arrive)
+- `datasets.ts` — open datasets with data dictionaries (CSV/JSON, CC BY 4.0)
+- `generators.ts` — curated, partial list of large sites for the map (no output estimates)
 
 ## Pages
 
 | Route | Purpose |
 |---|---|
-| `/` | Home — hero map, duration toggle, stats panel, charts |
-| `/curtailment` | Explainer + cost table + as-is vs recovered comparison |
-| `/proposal` | 50/50 proposal, how it works, *Objections, answered* |
-| `/forecast` | Interactive 20-year scenario explorer (sliders) |
-| `/get-involved` | 4 pathways → `/api/submissions` |
-| `/pledge` | Running tally + `/api/pledge` |
-| `/about` | Full transparent methodology + worked examples + sources |
-| `/blog`, `/blog/[slug]` | Blog (Supabase-or-seed) |
-| `/press` | Media kit |
-| `/data` | Researcher CSV export |
+| `/` | 01 · The problem — headline, year-by-year explorer, cost range, trend, map |
+| `/bitcoin` | 02 · The flexible load — how mining uses electricity, fair criticisms |
+| `/proposal` | 03 · The policy option — net economics, alternatives, options A–C, scenario |
+| `/briefs`, `/briefs/1` | Policy Brief No. 1 (prints to A4) |
+| `/methodology` | How every figure is made; method version and changelog |
+| `/data` | Open data downloads with data dictionaries |
+| `/about`, `/press`, `/blog`, `/get-involved`, `/pledge` | Supporting pages |
+| `/privacy`, `/terms` | Privacy notice (GDPR) and terms of use |
 | `/widget/{cost,map,calculator}` | Embeddable iframes |
-| `/admin` | Auth-gated dashboard + section seams |
+| `/admin` | Auth-gated dashboard (`ADMIN_EMAILS`) |
 
 ## APIs
 
-- `GET /api/social-summary?period=` — figures for Make.com scenarios (§11)
-- `GET /api/social-card?period=` — branded 1200×630 SVG card
-- `GET /api/data/[dataset]` — CSV export
-- `POST /api/submissions`, `POST /api/pledge` — forms (Supabase + Resend seams)
-- `POST /api/cron/ingest` — hourly ingestion + recompute (Cloudflare cron)
+- `GET /api/social-summary?year=` — figures for Make.com scenarios
+- `GET /api/social-card?year=` — branded 1200×630 SVG card
+- `GET /api/data/[dataset]` — CSV, or JSON with `?format=json`
+- `POST /api/submissions`, `POST /api/pledge` (+ `/confirm`, `/withdraw`) — forms
+- `GET|POST /api/cron/ingest` — hourly refresh; `?job=daily` also purges expired data
 
 ## Integrations (env-gated, graceful)
 

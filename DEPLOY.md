@@ -12,7 +12,9 @@ The app is a Next.js 15 (App Router) site with ISR, the Node runtime, and
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Public anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | **Secret** — server-only (form writes) |
 | `NEXT_PUBLIC_SITE_URL` | ✅ | e.g. `https://irishgrid.com` |
-| `MAKE_SOCIAL_WEBHOOK_SECRET` | rec. | Shared secret for the cron + Make webhook |
+| `CRON_SECRET` | ✅ | **Secret** — authorises `/api/cron/ingest` (or reuse `MAKE_SOCIAL_WEBHOOK_SECRET`); without it the cron route refuses in production |
+| `ADMIN_EMAILS` | ✅ | **Secret** — comma-separated emails allowed into `/admin`; without it admin stays locked in production |
+| `MAKE_SOCIAL_WEBHOOK_SECRET` | optional | Shared secret for the Make webhook (also accepted by the cron route) |
 | `RESEND_API_KEY` / `CONTACT_NOTIFY_EMAIL` | optional | Email confirmations |
 | `OPENAI_API_KEY` | optional | Blog drafting + GA translation |
 | `NEXT_PUBLIC_ANALYTICS_DOMAIN` | optional | Plausible/Umami |
@@ -70,44 +72,26 @@ Domains & Routes → add your custom domain. Set `NEXT_PUBLIC_SITE_URL` to match
 **ISR note** — for persistent caching across instances, add an R2 incremental
 cache in `open-next.config.ts` (see the adapter docs). It works without it too.
 
-## Path B — Vercel (alternative, zero extra setup)
+## Scheduled jobs (Cloudflare Cron Triggers)
 
-Everything also works on Vercel as-is. Import the repo (auto-detected), add the
-env vars, deploy. Cron is in `vercel.json` (set `CRON_SECRET`). Point the domain
-via Cloudflare DNS. Note: Vercel's free tier is non-commercial and its free cron
-is daily-only.
+The site's own Worker has a `scheduled()` handler (`custom-worker.js`) that
+calls `/api/cron/ingest` internally. The deploy token cannot register
+schedules, so add them once in the dashboard:
 
----
-
-## Hourly auto-updates (free Cloudflare Worker + Vercel)
-
-Vercel's free tier limits cron to once per day, but Cloudflare's free plan
-includes Cron Triggers up to every minute. A tiny Worker
-(`workers/cron-pinger/worker.js`) bridges the two: it pings the site's ingest
-endpoint hourly and warms the key pages so ISR re-renders with fresh data.
-
-Browser-only setup (~3 minutes):
-
-1. **dash.cloudflare.com → Workers & Pages → Create → Create Worker** → name it
-   `irishgrid-cron` → Deploy → **Edit code** → replace the contents with
-   `workers/cron-pinger/worker.js` → **Save and deploy**.
-2. Worker → **Settings → Variables and Secrets**:
-   - `SITE_URL` = `https://irishgrid.com` (plain text)
-   - `CRON_SECRET` = the same value you set in Vercel (choose *Encrypt*)
-3. Worker → **Settings → Triggers → Cron Triggers** → add two schedules:
-   - `0 * * * *` (hourly refresh)
-   - `15 6 * * *` (daily milestone job)
-
-Notes: the site's pages already revalidate hourly (ISR) when visited — the
-Worker guarantees freshness even with no traffic, and drives the daily job.
-The daily Vercel cron in `vercel.json` stays as a harmless backup.
+**Workers & Pages → irishgrid → Settings → Triggers → Cron Triggers**
+- `0 * * * *` — hourly: refresh the Bitcoin market snapshot and the annual series
+- `15 6 * * *` — daily: the same, plus deleting data past its retention period
+  (unconfirmed pledges after 30 days, Get Involved submissions after 2 years)
 
 ## After deploy — checklist
 
-- [ ] Supabase: `schema.sql` + `seed.sql` run; admin user created
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` set in the host (secret)
-- [ ] `NEXT_PUBLIC_SITE_URL` = your real domain
-- [ ] Domain pointed via Cloudflare DNS
-- [ ] Cron authorized (`CRON_SECRET` on Vercel, or the shared secret on Cloudflare)
-- [ ] Visit `/admin` → log in with the Supabase user
-- [ ] Submit a test pledge → confirm the row appears in Supabase `pledges`
+- [ ] Supabase SQL editor: run `supabase/migrations/20261005_hardening.sql`
+      (RLS on the remaining tables, pledge confirmation columns, audit log)
+- [ ] Supabase → Authentication → Providers → Email: turn off **Allow new users to sign up**
+- [ ] Cloudflare → irishgrid → Settings → Variables and Secrets (type *Secret*):
+      `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `ADMIN_EMAILS`, and
+      `RESEND_API_KEY` + `CONTACT_NOTIFY_EMAIL` for emails
+- [ ] Cron Triggers added (above)
+- [ ] Mailboxes exist: `privacy@`, `press@` and `hello@irishgrid.com` (Resend sender domain verified)
+- [ ] Visit `/admin` → sign in with an `ADMIN_EMAILS` address
+- [ ] Sign a test pledge → confirm by email → the tally counts it; withdraw → the row is deleted
